@@ -1,0 +1,49 @@
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: riskguard-postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: riskguard-rabbit
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+
+  #app:
+    #build: .
+    #container_name: riskguard-app
+    #restart: always
+    #depends_on:
+    #  - postgres
+    #  - rabbitmq
+    #env_file:
+    #  - .env
+    #ports:
+    #  - "8081:8080"
+    #environment:  
+    #  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5434/${POSTGRES_DB}
+    #  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+     # SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+     # SPRING_RABBITMQ_HOST: rabbitmq
+     # SPRING_RABBITMQ_PORT: 5672
+     # SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+     # SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+
+volumes:
+  postgres_data:
+  rabbit_data:

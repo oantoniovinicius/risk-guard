@@ -9,5 +9,4 @@ public class RiskGuardApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(RiskGuardApplication.class, args);
 	}
-
 }
