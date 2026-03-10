@@ -9,7 +9,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE user_credentials (
-    user_id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY,
+    user_id UUID UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     enabled BOOLEAN NOT NULL,
 

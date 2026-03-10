@@ -14,7 +14,7 @@ import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "credentials")
+@Table(name = "user_credentials")
 public class UserCredential {
 
     @Id
