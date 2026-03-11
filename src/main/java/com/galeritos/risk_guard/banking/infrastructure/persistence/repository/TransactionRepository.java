@@ -1,19 +1,16 @@
-package com.galeritos.risk_guard.banking.infrastructure.persistence;
+package com.galeritos.risk_guard.banking.infrastructure.persistence.repository;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
+import java.util.List;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
-import com.galeritos.risk_guard.banking.domain.repository.TransactionRepository;
+import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 
-@Repository
-public interface JpaTransactionRepository
-        extends JpaRepository<Transaction, UUID>, TransactionRepository {
+public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
 
     List<Transaction> findBySenderId(UUID senderId);
 
@@ -21,7 +18,8 @@ public interface JpaTransactionRepository
 
     List<Transaction> findByStatus(TransactionStatus status);
 
-    @Override
+    List<Transaction> findByFinancialStatus(FinancialStatus financialStatus);
+
     @Query("""
                 SELECT t FROM Transaction t
                 WHERE t.senderId = :userId
