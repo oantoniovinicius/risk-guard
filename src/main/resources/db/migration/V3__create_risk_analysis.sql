@@ -1,7 +1,7 @@
 CREATE TABLE risk_analysis (
     id UUID PRIMARY KEY,
 
-    transaction_id UUID NOT NULL,
+    transaction_id UUID NOT NULL UNIQUE,
     score NUMERIC(5,2) NOT NULL,
     risk_level VARCHAR(20) NOT NULL,
 

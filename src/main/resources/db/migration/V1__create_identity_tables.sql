@@ -5,7 +5,7 @@ CREATE TABLE users (
     document VARCHAR(14) NOT NULL UNIQUE,
     role VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE user_credentials (
