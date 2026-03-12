@@ -3,6 +3,8 @@ package com.galeritos.risk_guard.banking.domain.model;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +31,15 @@ public class Account {
     private BigDecimal reservedBalance;
 
     protected Account() {
+    }
+
+    public void reserve(BigDecimal amount) {
+        if (balance.compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
+
+        balance = balance.subtract(amount);
+        reservedBalance = reservedBalance.add(amount);
     }
 
     public Account(UUID id, UUID userId, BigDecimal balance, BigDecimal reservedBalance) {
