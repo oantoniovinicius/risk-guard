@@ -1,4 +1,4 @@
-package com.galeritos.risk_guard.identity.domain.model.enums;
+package com.galeritos.risk_guard.banking.domain.model.enums;
 
 public enum TransactionStatus {
     CREATED,

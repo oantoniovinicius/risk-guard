@@ -5,11 +5,12 @@ CREATE TABLE users (
     document VARCHAR(14) NOT NULL UNIQUE,
     role VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE user_credentials (
-    user_id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY,
+    user_id UUID UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     enabled BOOLEAN NOT NULL,
 
