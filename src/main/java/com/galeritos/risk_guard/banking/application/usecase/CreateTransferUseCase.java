@@ -2,10 +2,13 @@ package com.galeritos.risk_guard.banking.application.usecase;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.galeritos.risk_guard.banking.application.event.TransactionCreatedEvent;
+import com.galeritos.risk_guard.banking.application.port.out.EventPublisher;
 import com.galeritos.risk_guard.banking.application.usecase.dto.CreateTransferCommand;
 import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidTransferException;
@@ -22,10 +25,15 @@ import jakarta.transaction.Transactional;
 public class CreateTransferUseCase {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final EventPublisher eventPublisher;
 
-    public CreateTransferUseCase(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+    public CreateTransferUseCase(
+            AccountRepository accountRepository,
+            TransactionRepository transactionRepository,
+            EventPublisher eventPublisher) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -54,8 +62,23 @@ public class CreateTransferUseCase {
                 null,
                 LocalDateTime.now());
 
-        transactionRepository.save(transaction);
+        transaction = transactionRepository.save(transaction);
+        publishTransactionCreated(TransactionCreatedEvent.from(transaction));
 
         return transaction;
+    }
+
+    private void publishTransactionCreated(TransactionCreatedEvent event) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventPublisher.publishTransactionCreated(event);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventPublisher.publishTransactionCreated(event);
+            }
+        });
     }
 }
