@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: risk-guard
 
@@ -21,3 +24,9 @@ spring:
     port: ${SPRING_RABBITMQ_PORT:5672}
     username: ${RABBITMQ_DEFAULT_USER:guest}
     password: ${RABBITMQ_DEFAULT_PASS:guest}
+
+app:
+  messaging:
+    transaction-created:
+      exchange: ${TRANSACTION_CREATED_EXCHANGE:riskguard.events}
+      routing-key: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
