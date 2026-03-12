@@ -46,7 +46,6 @@ public class CreateTransferUseCase {
         accountRepository.save(sender);
 
         Transaction transaction = new Transaction(
-                UUID.randomUUID(),
                 command.senderId(),
                 command.receiverId(),
                 command.amount(),
