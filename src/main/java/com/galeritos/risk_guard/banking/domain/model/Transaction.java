@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Getter
@@ -54,9 +55,8 @@ public class Transaction {
     protected Transaction() {
     }
 
-    public Transaction(UUID id, UUID senderId, UUID receiverId, BigDecimal amount, TransactionStatus status,
+    public Transaction(UUID senderId, UUID receiverId, BigDecimal amount, TransactionStatus status,
             FinancialStatus financialStatus, RiskLevel riskLevel, LocalDateTime createdAt) {
-        this.id = id;
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.amount = amount;
