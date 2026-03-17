@@ -4,3 +4,4 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/CreateTransferUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/infrastructure/controller/TransferControllerIntegrationTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/usecase/AnalyzeTransactionUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/infrastructure/messaging/TransactionCreatedListenerIntegrationTest.java

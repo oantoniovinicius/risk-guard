@@ -79,6 +79,68 @@ class AnalyzeTransactionUseCaseTest {
     }
 
     @Test
+    void shouldClassifyMediumRiskAndPublishEvent() {
+        UUID transactionId = UUID.randomUUID();
+        TransactionCreatedEvent event = new TransactionCreatedEvent(
+                UUID.randomUUID(),
+                EventTypes.TRANSACTION_CREATED,
+                transactionId,
+                new BigDecimal("500.00"),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        when(riskAnalysisRepository.existsByTransactionId(transactionId)).thenReturn(false);
+        when(riskAnalysisRepository.save(any(RiskAnalysis.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        useCase.execute(event);
+
+        ArgumentCaptor<RiskAnalysis> riskCaptor = ArgumentCaptor.forClass(RiskAnalysis.class);
+        verify(riskAnalysisRepository).save(riskCaptor.capture());
+        RiskAnalysis savedAnalysis = riskCaptor.getValue();
+        assertEquals(0, new BigDecimal("0.61").compareTo(savedAnalysis.getScore()));
+        assertEquals(RiskLevel.MEDIUM, savedAnalysis.getRiskLevel());
+        assertEquals("Mock medium-risk rule based on amount", savedAnalysis.getExplanation());
+
+        ArgumentCaptor<TransactionAnalyzedEvent> eventCaptor = ArgumentCaptor.forClass(TransactionAnalyzedEvent.class);
+        verify(riskEventPublisher).publishTransactionAnalyzed(eventCaptor.capture());
+        TransactionAnalyzedEvent publishedEvent = eventCaptor.getValue();
+        assertEquals(RiskLevel.MEDIUM, publishedEvent.riskLevel());
+        assertEquals(0, new BigDecimal("0.61").compareTo(publishedEvent.score()));
+        assertEquals("Mock medium-risk rule based on amount", publishedEvent.explanation());
+    }
+
+    @Test
+    void shouldClassifyLowRiskAndPublishEvent() {
+        UUID transactionId = UUID.randomUUID();
+        TransactionCreatedEvent event = new TransactionCreatedEvent(
+                UUID.randomUUID(),
+                EventTypes.TRANSACTION_CREATED,
+                transactionId,
+                new BigDecimal("100.00"),
+                UUID.randomUUID(),
+                UUID.randomUUID());
+
+        when(riskAnalysisRepository.existsByTransactionId(transactionId)).thenReturn(false);
+        when(riskAnalysisRepository.save(any(RiskAnalysis.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        useCase.execute(event);
+
+        ArgumentCaptor<RiskAnalysis> riskCaptor = ArgumentCaptor.forClass(RiskAnalysis.class);
+        verify(riskAnalysisRepository).save(riskCaptor.capture());
+        RiskAnalysis savedAnalysis = riskCaptor.getValue();
+        assertEquals(0, new BigDecimal("0.18").compareTo(savedAnalysis.getScore()));
+        assertEquals(RiskLevel.LOW, savedAnalysis.getRiskLevel());
+        assertEquals("Mock low-risk rule based on amount", savedAnalysis.getExplanation());
+
+        ArgumentCaptor<TransactionAnalyzedEvent> eventCaptor = ArgumentCaptor.forClass(TransactionAnalyzedEvent.class);
+        verify(riskEventPublisher).publishTransactionAnalyzed(eventCaptor.capture());
+        TransactionAnalyzedEvent publishedEvent = eventCaptor.getValue();
+        assertEquals(RiskLevel.LOW, publishedEvent.riskLevel());
+        assertEquals(0, new BigDecimal("0.18").compareTo(publishedEvent.score()));
+        assertEquals("Mock low-risk rule based on amount", publishedEvent.explanation());
+    }
+
+    @Test
     void shouldIgnoreAlreadyAnalyzedTransaction() {
         UUID transactionId = UUID.randomUUID();
         TransactionCreatedEvent event = new TransactionCreatedEvent(

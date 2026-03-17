@@ -113,6 +113,7 @@ class TransferControllerIntegrationTest {
                 .orElseThrow();
         assertEquals(0, senderAccount.getBalance().compareTo(new BigDecimal("375.00")));
         assertEquals(0, senderAccount.getReservedBalance().compareTo(new BigDecimal("125.00")));
+        assertEquals(1L, transactionRepository.count());
         UUID persistedTransactionId = transactionRepository.findAll().get(0).getId();
 
         Message message = awaitMessage();
