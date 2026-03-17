@@ -33,13 +33,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.galeritos.risk_guard.TestcontainersConfiguration;
-import com.galeritos.risk_guard.banking.infrastructure.messaging.RabbitMessagingProperties;
+import com.galeritos.risk_guard.config.MessagingProperties;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
+import com.galeritos.risk_guard.shared.events.EventTypes;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -81,8 +82,10 @@ class TransferControllerIntegrationTest {
 
     @Test
     void shouldCreateTransferReserveBalanceAndPublishTransactionCreatedMessage() throws Exception {
-        User sender = userRepository.save(new User(null, "Alice Sender", "alice@example.com", "12345678901", Role.USER, UserStatus.ACTIVE));
-        User receiver = userRepository.save(new User(null, "Bob Receiver", "bob@example.com", "10987654321", Role.USER, UserStatus.ACTIVE));
+        User sender = userRepository
+                .save(new User(null, "Alice Sender", "alice@example.com", "12345678901", Role.USER, UserStatus.ACTIVE));
+        User receiver = userRepository
+                .save(new User(null, "Bob Receiver", "bob@example.com", "10987654321", Role.USER, UserStatus.ACTIVE));
         UUID senderId = sender.getId();
         UUID receiverId = receiver.getId();
 
@@ -92,7 +95,8 @@ class TransferControllerIntegrationTest {
                 new BigDecimal("500.00"),
                 BigDecimal.ZERO));
 
-        String requestBody = objectMapper.writeValueAsString(new TransferRequestPayload(senderId, receiverId, new BigDecimal("125.00")));
+        String requestBody = objectMapper
+                .writeValueAsString(new TransferRequestPayload(senderId, receiverId, new BigDecimal("125.00")));
 
         mockMvc.perform(post("/transfers")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -109,17 +113,18 @@ class TransferControllerIntegrationTest {
                 .orElseThrow();
         assertEquals(0, senderAccount.getBalance().compareTo(new BigDecimal("375.00")));
         assertEquals(0, senderAccount.getReservedBalance().compareTo(new BigDecimal("125.00")));
+        assertEquals(1L, transactionRepository.count());
+        UUID persistedTransactionId = transactionRepository.findAll().get(0).getId();
 
         Message message = awaitMessage();
         JsonNode eventPayload = objectMapper.readTree(new String(message.getBody(), StandardCharsets.UTF_8));
 
-        assertNotNull(eventPayload.get("transactionId").asText());
+        assertNotNull(eventPayload.get("eventId").asText());
+        assertEquals(EventTypes.TRANSACTION_CREATED, eventPayload.get("eventType").asText());
+        assertEquals(persistedTransactionId.toString(), eventPayload.get("aggregateId").asText());
         assertEquals(senderId.toString(), eventPayload.get("senderId").asText());
         assertEquals(receiverId.toString(), eventPayload.get("receiverId").asText());
         assertEquals(0, new BigDecimal("125.00").compareTo(eventPayload.get("amount").decimalValue()));
-        assertEquals("CREATED", eventPayload.get("status").asText());
-        assertEquals("RESERVED", eventPayload.get("financialStatus").asText());
-        assertNotNull(eventPayload.get("createdAt").asText());
     }
 
     private Message awaitMessage() throws InterruptedException {
@@ -151,10 +156,10 @@ class TransferControllerIntegrationTest {
         Binding transactionCreatedTestBinding(
                 Queue transactionCreatedTestQueue,
                 TopicExchange transactionEventsExchange,
-                RabbitMessagingProperties properties) {
+                MessagingProperties properties) {
             return BindingBuilder.bind(transactionCreatedTestQueue)
                     .to(transactionEventsExchange)
-                    .with(properties.routingKey());
+                    .with(properties.routing().transactionCreated());
         }
     }
 }

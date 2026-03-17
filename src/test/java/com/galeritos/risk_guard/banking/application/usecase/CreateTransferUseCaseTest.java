@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.galeritos.risk_guard.banking.application.event.TransactionCreatedEvent;
-import com.galeritos.risk_guard.banking.application.port.out.EventPublisher;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.application.usecase.dto.CreateTransferCommand;
 import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundException;
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
@@ -32,6 +32,7 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.shared.events.EventTypes;
 
 @ExtendWith(MockitoExtension.class)
 class CreateTransferUseCaseTest {
@@ -43,7 +44,7 @@ class CreateTransferUseCaseTest {
     private TransactionRepository transactionRepository;
 
     @Mock
-    private EventPublisher eventPublisher;
+    private BankingEventPublisher eventPublisher;
 
     @InjectMocks
     private CreateTransferUseCase useCase;
@@ -54,7 +55,8 @@ class CreateTransferUseCaseTest {
         UUID receiverId = UUID.randomUUID();
         UUID transactionId = UUID.randomUUID();
         CreateTransferCommand command = new CreateTransferCommand(senderId, receiverId, new BigDecimal("100.00"));
-        Account senderAccount = new Account(UUID.randomUUID(), senderId, new BigDecimal("250.00"), new BigDecimal("25.00"));
+        Account senderAccount = new Account(UUID.randomUUID(), senderId, new BigDecimal("250.00"),
+                new BigDecimal("25.00"));
 
         when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
@@ -83,13 +85,12 @@ class CreateTransferUseCaseTest {
         ArgumentCaptor<TransactionCreatedEvent> eventCaptor = ArgumentCaptor.forClass(TransactionCreatedEvent.class);
         verify(eventPublisher).publishTransactionCreated(eventCaptor.capture());
         TransactionCreatedEvent publishedEvent = eventCaptor.getValue();
-        assertEquals(transactionId, publishedEvent.transactionId());
+        assertNotNull(publishedEvent.eventId());
+        assertEquals(EventTypes.TRANSACTION_CREATED, publishedEvent.eventType());
+        assertEquals(transactionId, publishedEvent.aggregateId());
         assertEquals(senderId, publishedEvent.senderId());
         assertEquals(receiverId, publishedEvent.receiverId());
         assertEquals(new BigDecimal("100.00"), publishedEvent.amount());
-        assertEquals(TransactionStatus.CREATED, publishedEvent.status());
-        assertEquals(FinancialStatus.RESERVED, publishedEvent.financialStatus());
-        assertNotNull(publishedEvent.createdAt());
     }
 
     @Test
@@ -140,7 +141,8 @@ class CreateTransferUseCaseTest {
     void shouldThrowWhenSenderHasInsufficientBalance() {
         UUID senderId = UUID.randomUUID();
         UUID receiverId = UUID.randomUUID();
-        Account senderAccount = new Account(UUID.randomUUID(), senderId, new BigDecimal("40.00"), new BigDecimal("5.00"));
+        Account senderAccount = new Account(UUID.randomUUID(), senderId, new BigDecimal("40.00"),
+                new BigDecimal("5.00"));
         CreateTransferCommand command = new CreateTransferCommand(senderId, receiverId, new BigDecimal("50.00"));
 
         when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));

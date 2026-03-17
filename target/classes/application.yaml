@@ -27,6 +27,9 @@ spring:
 
 app:
   messaging:
-    transaction-created:
-      exchange: ${TRANSACTION_CREATED_EXCHANGE:riskguard.events}
-      routing-key: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
+    exchange: ${APP_MESSAGING_EXCHANGE:riskguard.events}
+    consumer:
+      transaction-created-queue: ${TRANSACTION_CREATED_QUEUE:riskguard.risk.transaction-created}
+    routing:
+      transaction-created: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
+      transaction-analyzed: ${TRANSACTION_ANALYZED_ROUTING_KEY:transaction.analyzed}
