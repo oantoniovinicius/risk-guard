@@ -7,5 +7,6 @@ public enum TransactionStatus {
     AWAITING_ANALYST,
     APPROVED,
     DENIED,
-    FRAUD_CONFIRMED
+    FRAUD_CONFIRMED,
+    DISPUTED
 }

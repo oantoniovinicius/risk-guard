@@ -1,0 +1,48 @@
+package com.galeritos.risk_guard.banking.application.usecase;
+
+import org.springframework.stereotype.Service;
+
+import com.galeritos.risk_guard.banking.domain.model.Transaction;
+import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.risk.application.event.TransactionAnalyzedEvent;
+import com.galeritos.risk_guard.shared.enums.RiskLevel;
+
+import jakarta.transaction.Transactional;
+
+@Service
+public class ApplyTransactionAnalysisUseCase {
+    private final TransactionRepository transactionRepository;
+
+    public ApplyTransactionAnalysisUseCase(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    @Transactional
+    public void execute(TransactionAnalyzedEvent event) {
+        Transaction transaction = transactionRepository.findById(event.transactionId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Transaction not found for analysis event: " + event.transactionId()));
+
+        if (transaction.getStatus() != TransactionStatus.CREATED
+                && transaction.getStatus() != TransactionStatus.ANALYZING) {
+            return;
+        }
+
+        if (transaction.getStatus() == TransactionStatus.CREATED) {
+            transaction.startAnalyzing();
+        }
+
+        transaction.assignRiskLevel(event.riskLevel());
+        applyDecision(transaction, event.riskLevel());
+        transactionRepository.save(transaction);
+    }
+
+    private void applyDecision(Transaction transaction, RiskLevel riskLevel) {
+        switch (riskLevel) {
+            case LOW -> transaction.approve();
+            case MEDIUM -> transaction.awaitAnalyst();
+            case HIGH -> transaction.awaitCustomer();
+        }
+    }
+}
