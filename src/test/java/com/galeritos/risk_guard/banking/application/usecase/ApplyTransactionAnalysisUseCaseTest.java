@@ -33,6 +33,9 @@ class ApplyTransactionAnalysisUseCaseTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
+
     @InjectMocks
     private ApplyTransactionAnalysisUseCase useCase;
 
@@ -64,6 +67,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         assertEquals(RiskLevel.LOW, transaction.getRiskLevel());
         verify(transactionRepository).save(transaction);
+        verify(finalizeTransactionFinancialUseCase).execute(transactionId);
     }
 
     @Test
@@ -94,6 +98,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(TransactionStatus.AWAITING_ANALYST, transaction.getStatus());
         assertEquals(RiskLevel.MEDIUM, transaction.getRiskLevel());
         verify(transactionRepository).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
     }
 
     @Test
@@ -124,6 +129,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
         assertEquals(RiskLevel.HIGH, transaction.getRiskLevel());
         verify(transactionRepository).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
     }
 
     @Test
@@ -154,6 +160,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         assertEquals(RiskLevel.LOW, transaction.getRiskLevel());
         verify(transactionRepository, never()).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
     }
 
     @Test
@@ -171,5 +178,6 @@ class ApplyTransactionAnalysisUseCaseTest {
 
         assertThrows(IllegalArgumentException.class, () -> useCase.execute(event));
         verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
     }
 }

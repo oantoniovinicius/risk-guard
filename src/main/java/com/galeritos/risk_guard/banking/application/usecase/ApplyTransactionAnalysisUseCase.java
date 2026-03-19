@@ -13,9 +13,13 @@ import jakarta.transaction.Transactional;
 @Service
 public class ApplyTransactionAnalysisUseCase {
     private final TransactionRepository transactionRepository;
+    private final FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
 
-    public ApplyTransactionAnalysisUseCase(TransactionRepository transactionRepository) {
+    public ApplyTransactionAnalysisUseCase(
+            TransactionRepository transactionRepository,
+            FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase) {
         this.transactionRepository = transactionRepository;
+        this.finalizeTransactionFinancialUseCase = finalizeTransactionFinancialUseCase;
     }
 
     @Transactional
@@ -36,6 +40,10 @@ public class ApplyTransactionAnalysisUseCase {
         transaction.assignRiskLevel(event.riskLevel());
         applyDecision(transaction, event.riskLevel());
         transactionRepository.save(transaction);
+
+        if (transaction.getStatus() == TransactionStatus.APPROVED) {
+            finalizeTransactionFinancialUseCase.execute(transaction.getId());
+        }
     }
 
     private void applyDecision(Transaction transaction, RiskLevel riskLevel) {
