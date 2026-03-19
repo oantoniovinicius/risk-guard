@@ -8,7 +8,7 @@ public record MessagingProperties(
         Consumer consumer,
         Routing routing) {
 
-    public record Consumer(String transactionCreatedQueue) {
+    public record Consumer(String transactionCreatedQueue, String transactionAnalyzedQueue) {
     }
 
     public record Routing(String transactionCreated, String transactionAnalyzed) {

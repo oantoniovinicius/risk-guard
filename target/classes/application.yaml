@@ -30,6 +30,7 @@ app:
     exchange: ${APP_MESSAGING_EXCHANGE:riskguard.events}
     consumer:
       transaction-created-queue: ${TRANSACTION_CREATED_QUEUE:riskguard.risk.transaction-created}
+      transaction-analyzed-queue: ${TRANSACTION_ANALYZED_QUEUE:riskguard.banking.transaction-analyzed}
     routing:
       transaction-created: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
       transaction-analyzed: ${TRANSACTION_ANALYZED_ROUTING_KEY:transaction.analyzed}

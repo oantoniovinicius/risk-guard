@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
+import com.galeritos.risk_guard.banking.domain.exception.InsufficientReservedBalanceException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,6 +41,25 @@ public class Account {
 
         balance = balance.subtract(amount);
         reservedBalance = reservedBalance.add(amount);
+    }
+
+    public void credit(BigDecimal amount) {
+        balance = balance.add(amount);
+    }
+
+    public void consumeReserved(BigDecimal amount) {
+        if (reservedBalance.compareTo(amount) < 0) {
+            throw new InsufficientReservedBalanceException(amount, reservedBalance);
+        }
+        reservedBalance = reservedBalance.subtract(amount);
+    }
+
+    public void releaseReserved(BigDecimal amount) {
+        if (reservedBalance.compareTo(amount) < 0) {
+            throw new InsufficientReservedBalanceException(amount, reservedBalance);
+        }
+        reservedBalance = reservedBalance.subtract(amount);
+        balance = balance.add(amount);
     }
 
     public Account(UUID id, UUID userId, BigDecimal balance, BigDecimal reservedBalance) {
