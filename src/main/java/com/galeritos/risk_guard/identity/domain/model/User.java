@@ -41,6 +41,9 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
+    @Column(name = "suspect", nullable = false)
+    private boolean suspect;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -54,6 +57,15 @@ public class User {
         this.document = document;
         this.role = role;
         this.status = status;
+        this.suspect = false;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void markAsSuspect() {
+        this.suspect = true;
+    }
+
+    public boolean isSuspect() {
+        return this.suspect;
     }
 }

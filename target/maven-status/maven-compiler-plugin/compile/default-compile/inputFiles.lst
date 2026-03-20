@@ -4,10 +4,12 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/ApplyTransactionAnalysisUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/CreateTransferUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/FinalizeTransactionFinancialUseCase.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/HandleFraudConfirmedUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/dto/CreateTransferCommand.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AccountNotFoundException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientBalanceException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientReservedBalanceException.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidFraudConfirmationStateException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidTransactionFinancialFinalizationException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidTransactionStateTransitionException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidTransferException.java
@@ -26,6 +28,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/MessagingProperties.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/RabbitMqConfig.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/SecurityConfig.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/UserNotFoundException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/model/PasswordResetToken.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/model/User.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/model/UserCredential.java
