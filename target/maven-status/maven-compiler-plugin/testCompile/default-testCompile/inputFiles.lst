@@ -4,6 +4,9 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/ApplyTransactionAnalysisUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/CreateTransferUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/FinalizeTransactionFinancialUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleAnalystDecisionUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationTimeoutUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleFraudConfirmedUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/infrastructure/controller/TransferControllerIntegrationTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/usecase/AnalyzeTransactionUseCaseTest.java

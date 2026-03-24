@@ -84,6 +84,9 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "customer_decision_deadline_at")
+    private LocalDateTime customerDecisionDeadlineAt;
+
     protected Transaction() {
     }
 
@@ -107,24 +110,29 @@ public class Transaction {
         transitionTo(TransactionStatus.ANALYZING);
     }
 
-    public void awaitCustomer() {
+    public void awaitCustomer(LocalDateTime customerDecisionDeadlineAt) {
         transitionTo(TransactionStatus.AWAITING_CUSTOMER);
+        this.customerDecisionDeadlineAt = customerDecisionDeadlineAt;
     }
 
     public void awaitAnalyst() {
         transitionTo(TransactionStatus.AWAITING_ANALYST);
+        this.customerDecisionDeadlineAt = null;
     }
 
     public void approve() {
         transitionTo(TransactionStatus.APPROVED);
+        this.customerDecisionDeadlineAt = null;
     }
 
     public void deny() {
         transitionTo(TransactionStatus.DENIED);
+        this.customerDecisionDeadlineAt = null;
     }
 
     public void confirmFraud() {
         transitionTo(TransactionStatus.FRAUD_CONFIRMED);
+        this.customerDecisionDeadlineAt = null;
     }
 
     public void dispute() {

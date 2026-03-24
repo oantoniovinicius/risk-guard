@@ -2,6 +2,7 @@ package com.galeritos.risk_guard.banking.infrastructure.persistence.repository;
 
 import java.util.UUID;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -23,6 +24,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     List<Transaction> findByStatus(TransactionStatus status);
 
     List<Transaction> findByFinancialStatus(FinancialStatus financialStatus);
+
+    @Query("""
+                SELECT t.id FROM Transaction t
+                WHERE t.status = com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus.AWAITING_CUSTOMER
+                  AND t.customerDecisionDeadlineAt IS NOT NULL
+                  AND t.customerDecisionDeadlineAt <= :now
+            """)
+    List<UUID> findExpiredAwaitingCustomerIds(LocalDateTime now);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

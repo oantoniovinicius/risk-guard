@@ -1,5 +1,7 @@
 package com.galeritos.risk_guard.banking.application.usecase;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
 
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
@@ -50,7 +52,7 @@ public class ApplyTransactionAnalysisUseCase {
         switch (riskLevel) {
             case LOW -> transaction.approve();
             case MEDIUM -> transaction.awaitAnalyst();
-            case HIGH -> transaction.awaitCustomer();
+            case HIGH -> transaction.awaitCustomer(LocalDateTime.now().plusMinutes(10));
         }
     }
 }
