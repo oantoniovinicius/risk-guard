@@ -1,7 +1,9 @@
 package com.galeritos.risk_guard.banking.application.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -104,6 +106,7 @@ class ApplyTransactionAnalysisUseCaseTest {
     @Test
     void shouldRouteToCustomerWhenRiskIsHigh() {
         UUID transactionId = UUID.randomUUID();
+        LocalDateTime before = LocalDateTime.now();
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -125,9 +128,13 @@ class ApplyTransactionAnalysisUseCaseTest {
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
 
         useCase.execute(event);
+        LocalDateTime after = LocalDateTime.now();
 
         assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
         assertEquals(RiskLevel.HIGH, transaction.getRiskLevel());
+        assertNotNull(transaction.getCustomerDecisionDeadlineAt());
+        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isBefore(before.plusMinutes(10)));
+        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isAfter(after.plusMinutes(10)));
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
     }
