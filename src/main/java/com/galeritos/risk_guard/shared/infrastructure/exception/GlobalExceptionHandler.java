@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundException;
+import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidCustomerConfirmationStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidTransferException;
@@ -43,6 +44,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCustomerConfirmationStateException.class)
     public ResponseEntity<?> handleInvalidCustomerState(InvalidCustomerConfirmationStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidAnalystDecisionStateException.class)
+    public ResponseEntity<?> handleInvalidAnalystState(InvalidAnalystDecisionStateException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));

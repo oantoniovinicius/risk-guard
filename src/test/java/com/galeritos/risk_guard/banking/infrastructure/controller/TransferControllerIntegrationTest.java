@@ -82,6 +82,8 @@ class TransferControllerIntegrationTest {
 
     @Test
     void shouldCreateTransferReserveBalanceAndPublishTransactionCreatedMessage() throws Exception {
+        BigDecimal transferAmount = new BigDecimal("350.00");
+
         User sender = userRepository
                 .save(new User(null, "Alice Sender", "alice@example.com", "12345678901", Role.USER, UserStatus.ACTIVE));
         User receiver = userRepository
@@ -94,9 +96,14 @@ class TransferControllerIntegrationTest {
                 senderId,
                 new BigDecimal("500.00"),
                 BigDecimal.ZERO));
+        accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
+                null,
+                receiverId,
+                new BigDecimal("250.00"),
+                BigDecimal.ZERO));
 
         String requestBody = objectMapper
-                .writeValueAsString(new TransferRequestPayload(senderId, receiverId, new BigDecimal("125.00")));
+                .writeValueAsString(new TransferRequestPayload(senderId, receiverId, transferAmount));
 
         mockMvc.perform(post("/transfers")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -104,15 +111,15 @@ class TransferControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.senderId").value(senderId.toString()))
                 .andExpect(jsonPath("$.receiverId").value(receiverId.toString()))
-                .andExpect(jsonPath("$.amount").value(125.00))
+                .andExpect(jsonPath("$.amount").value(350.00))
                 .andExpect(jsonPath("$.status").value("CREATED"))
                 .andExpect(jsonPath("$.transactionId").isNotEmpty())
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
 
         com.galeritos.risk_guard.banking.domain.model.Account senderAccount = accountRepository.findByUserId(senderId)
                 .orElseThrow();
-        assertEquals(0, senderAccount.getBalance().compareTo(new BigDecimal("375.00")));
-        assertEquals(0, senderAccount.getReservedBalance().compareTo(new BigDecimal("125.00")));
+        assertEquals(0, senderAccount.getBalance().compareTo(new BigDecimal("150.00")));
+        assertEquals(0, senderAccount.getReservedBalance().compareTo(transferAmount));
         assertEquals(1L, transactionRepository.count());
         UUID persistedTransactionId = transactionRepository.findAll().get(0).getId();
 
@@ -124,7 +131,7 @@ class TransferControllerIntegrationTest {
         assertEquals(persistedTransactionId.toString(), eventPayload.get("aggregateId").asText());
         assertEquals(senderId.toString(), eventPayload.get("senderId").asText());
         assertEquals(receiverId.toString(), eventPayload.get("receiverId").asText());
-        assertEquals(0, new BigDecimal("125.00").compareTo(eventPayload.get("amount").decimalValue()));
+        assertEquals(0, transferAmount.compareTo(eventPayload.get("amount").decimalValue()));
     }
 
     private Message awaitMessage() throws InterruptedException {

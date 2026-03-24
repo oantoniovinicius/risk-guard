@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.galeritos.risk_guard.banking.application.usecase.CreateTransferUseCase;
+import com.galeritos.risk_guard.banking.application.usecase.HandleAnalystDecisionUseCase;
 import com.galeritos.risk_guard.banking.application.usecase.HandleCustomerConfirmationUseCase;
+import com.galeritos.risk_guard.banking.infrastructure.controller.dto.AnalystDecisionRequest;
 import com.galeritos.risk_guard.banking.application.usecase.dto.CreateTransferCommand;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CustomerConfirmationRequest;
@@ -22,11 +24,14 @@ import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTran
 public class TransferController {
     private final CreateTransferUseCase createTransferUseCase;
     private final HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase;
+    private final HandleAnalystDecisionUseCase handleAnalystDecisionUseCase;
 
     public TransferController(CreateTransferUseCase createTransferUseCase,
-            HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase) {
+            HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase,
+            HandleAnalystDecisionUseCase handleAnalystDecisionUseCase) {
         this.createTransferUseCase = createTransferUseCase;
         this.handleCustomerConfirmationUseCase = handleCustomerConfirmationUseCase;
+        this.handleAnalystDecisionUseCase = handleAnalystDecisionUseCase;
     }
 
     @PostMapping
@@ -54,6 +59,14 @@ public class TransferController {
             @PathVariable UUID transactionId,
             @RequestBody CustomerConfirmationRequest request) {
         handleCustomerConfirmationUseCase.execute(transactionId, request.decision());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{transactionId}/analyst-decision")
+    public ResponseEntity<Void> decideTransactionAsAnalyst(
+            @PathVariable UUID transactionId,
+            @RequestBody AnalystDecisionRequest request) {
+        handleAnalystDecisionUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }
 }
