@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 import com.galeritos.risk_guard.risk.application.event.TransactionAnalyzedEvent;
 import com.galeritos.risk_guard.shared.enums.RiskLevel;
@@ -37,6 +38,9 @@ class ApplyTransactionAnalysisUseCaseTest {
 
     @Mock
     private FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
+
+    @Mock
+    private BankingEventPublisher eventPublisher;
 
     @InjectMocks
     private ApplyTransactionAnalysisUseCase useCase;
@@ -70,6 +74,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(RiskLevel.LOW, transaction.getRiskLevel());
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -101,6 +106,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(RiskLevel.MEDIUM, transaction.getRiskLevel());
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -137,6 +143,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertTrue(!transaction.getCustomerDecisionDeadlineAt().isAfter(after.plusMinutes(10)));
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -168,6 +175,7 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertEquals(RiskLevel.LOW, transaction.getRiskLevel());
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -186,5 +194,6 @@ class ApplyTransactionAnalysisUseCaseTest {
         assertThrows(IllegalArgumentException.class, () -> useCase.execute(event));
         verify(transactionRepository, never()).save(any(Transaction.class));
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 }

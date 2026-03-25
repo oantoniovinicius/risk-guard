@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,18 +17,22 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.AnalystDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.shared.events.EventTypes;
 
 @ExtendWith(MockitoExtension.class)
 class HandleAnalystDecisionUseCaseTest {
@@ -40,6 +45,9 @@ class HandleAnalystDecisionUseCaseTest {
 
     @Mock
     private HandleFraudConfirmedUseCase handleFraudConfirmedUseCase;
+
+    @Mock
+    private BankingEventPublisher eventPublisher;
 
     @InjectMocks
     private HandleAnalystDecisionUseCase useCase;
@@ -66,6 +74,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -90,6 +99,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -114,6 +124,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(handleFraudConfirmedUseCase).execute(transactionId);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -142,6 +153,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -164,6 +176,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -186,6 +199,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -208,6 +222,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(handleFraudConfirmedUseCase).execute(transactionId);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -232,6 +247,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -244,6 +260,7 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(org.mockito.ArgumentMatchers.any(Transaction.class));
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -267,5 +284,72 @@ class HandleAnalystDecisionUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldPublishTransactionApprovedEvent() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("80.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.APPROVE);
+
+        ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
+        verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
+        assertEquals(EventTypes.TRANSACTION_APPROVED, captor.getValue().eventType());
+    }
+
+    @Test
+    void shouldPublishTransactionDeniedEvent() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("80.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.DENY);
+
+        ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
+        verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
+        assertEquals(EventTypes.TRANSACTION_DENIED, captor.getValue().eventType());
+    }
+
+    @Test
+    void shouldPublishTransactionFraudConfirmedEvent() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("80.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+
+        ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
+        verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
+        assertEquals(EventTypes.TRANSACTION_FRAUD_CONFIRMED, captor.getValue().eventType());
     }
 }

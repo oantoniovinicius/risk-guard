@@ -22,8 +22,8 @@ spring:
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
     port: ${SPRING_RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_DEFAULT_USER:guest}
-    password: ${RABBITMQ_DEFAULT_PASS:guest}
+    username: ${RABBITMQ_DEFAULT_USER}
+    password: ${RABBITMQ_DEFAULT_PASS}
 
 app:
   messaging:
@@ -31,6 +31,8 @@ app:
     consumer:
       transaction-created-queue: ${TRANSACTION_CREATED_QUEUE:riskguard.risk.transaction-created}
       transaction-analyzed-queue: ${TRANSACTION_ANALYZED_QUEUE:riskguard.banking.transaction-analyzed}
+      transaction-status-queue: ${TRANSACTION_STATUS_QUEUE:riskguard.notification.transaction-status}
     routing:
       transaction-created: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
       transaction-analyzed: ${TRANSACTION_ANALYZED_ROUTING_KEY:transaction.analyzed}
+      transaction-status: ${TRANSACTION_STATUS_ROUTING_KEY:transaction-status}

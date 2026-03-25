@@ -23,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +31,9 @@ class HandleCustomerConfirmationTimeoutUseCaseTest {
 
     @Mock
     private TransactionRepository transactionRepository;
+
+    @Mock
+    private BankingEventPublisher eventPublisher;
 
     @InjectMocks
     private HandleCustomerConfirmationTimeoutUseCase useCase;
@@ -59,6 +63,7 @@ class HandleCustomerConfirmationTimeoutUseCaseTest {
         assertEquals(TransactionStatus.AWAITING_ANALYST, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
         verify(transactionRepository).save(transaction);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -85,6 +90,7 @@ class HandleCustomerConfirmationTimeoutUseCaseTest {
         assertEquals(0, transitioned);
         assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
         verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -110,6 +116,7 @@ class HandleCustomerConfirmationTimeoutUseCaseTest {
         assertEquals(0, transitioned);
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -124,5 +131,6 @@ class HandleCustomerConfirmationTimeoutUseCaseTest {
 
         assertEquals(0, transitioned);
         verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 }
