@@ -3,6 +3,7 @@ package com.galeritos.risk_guard.banking.application.usecase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.CustomerConfirmationDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +40,9 @@ class HandleCustomerConfirmationUseCaseTest {
 
     @Mock
     private HandleFraudConfirmedUseCase handleFraudConfirmedUseCase;
+
+    @Mock
+    private BankingEventPublisher eventPublisher;
 
     @InjectMocks
     private HandleCustomerConfirmationUseCase useCase;
@@ -66,6 +71,7 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -92,6 +98,7 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository).save(transaction);
         verify(handleFraudConfirmedUseCase).execute(transactionId);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -115,6 +122,7 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -138,6 +146,7 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(handleFraudConfirmedUseCase).execute(transactionId);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -152,6 +161,7 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository, never()).save(org.mockito.ArgumentMatchers.any(Transaction.class));
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     @Test
@@ -176,5 +186,6 @@ class HandleCustomerConfirmationUseCaseTest {
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 }

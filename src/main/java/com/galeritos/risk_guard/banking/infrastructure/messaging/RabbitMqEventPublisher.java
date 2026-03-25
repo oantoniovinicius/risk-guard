@@ -4,6 +4,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import com.galeritos.risk_guard.banking.application.event.TransactionCreatedEvent;
+import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
 import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.config.MessagingProperties;
 
@@ -22,6 +23,14 @@ public class RabbitMqEventPublisher implements BankingEventPublisher {
         rabbitTemplate.convertAndSend(
                 messagingProperties.exchange(),
                 messagingProperties.routing().transactionCreated(),
+                event);
+    }
+
+    @Override
+    public void publishTransactionStatusChanged(TransactionStatusChangedEvent event) {
+        rabbitTemplate.convertAndSend(
+                messagingProperties.exchange(),
+                messagingProperties.routing().transactionStatus(),
                 event);
     }
 }

@@ -4,13 +4,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
+import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.AnalystDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.shared.events.EventTypes;
 
 import jakarta.transaction.Transactional;
 
@@ -19,14 +24,17 @@ public class HandleAnalystDecisionUseCase {
     private final TransactionRepository transactionRepository;
     private final FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
     private final HandleFraudConfirmedUseCase handleFraudConfirmedUseCase;
+    private final BankingEventPublisher eventPublisher;
 
     public HandleAnalystDecisionUseCase(
             TransactionRepository transactionRepository,
             FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase,
-            HandleFraudConfirmedUseCase handleFraudConfirmedUseCase) {
+            HandleFraudConfirmedUseCase handleFraudConfirmedUseCase,
+            BankingEventPublisher eventPublisher) {
         this.transactionRepository = transactionRepository;
         this.finalizeTransactionFinancialUseCase = finalizeTransactionFinancialUseCase;
         this.handleFraudConfirmedUseCase = handleFraudConfirmedUseCase;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -37,6 +45,7 @@ public class HandleAnalystDecisionUseCase {
         if (transaction.getStatus() == TransactionStatus.AWAITING_ANALYST) {
             applyFromAwaitingAnalyst(transaction, decision);
             transactionRepository.save(transaction);
+            publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
             triggerPostTransitionSideEffects(transactionId, decision);
             return;
         }
@@ -81,5 +90,28 @@ public class HandleAnalystDecisionUseCase {
                 // No financial finalization while awaiting customer confirmation.
             }
         }
+    }
+
+    private String mapDecisionToEventType(AnalystDecision decision) {
+        return switch (decision) {
+            case APPROVE -> EventTypes.TRANSACTION_APPROVED;
+            case DENY -> EventTypes.TRANSACTION_DENIED;
+            case CONFIRM_FRAUD -> EventTypes.TRANSACTION_FRAUD_CONFIRMED;
+            case REQUEST_CUSTOMER_CONFIRMATION -> EventTypes.TRANSACTION_AWAITING_CUSTOMER;
+        };
+    }
+
+    private void publishStatusChanged(TransactionStatusChangedEvent event) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventPublisher.publishTransactionStatusChanged(event);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventPublisher.publishTransactionStatusChanged(event);
+            }
+        });
     }
 }
