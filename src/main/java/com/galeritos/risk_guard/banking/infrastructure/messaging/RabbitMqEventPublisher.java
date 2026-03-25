@@ -30,7 +30,7 @@ public class RabbitMqEventPublisher implements BankingEventPublisher {
     public void publishTransactionStatusChanged(TransactionStatusChangedEvent event) {
         rabbitTemplate.convertAndSend(
                 messagingProperties.exchange(),
-                messagingProperties.routing().transactionStatus(),
+                event.eventType(),
                 event);
     }
 }
