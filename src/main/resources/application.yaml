@@ -35,4 +35,4 @@ app:
     routing:
       transaction-created: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
       transaction-analyzed: ${TRANSACTION_ANALYZED_ROUTING_KEY:transaction.analyzed}
-      transaction-status: ${TRANSACTION_STATUS_ROUTING_KEY:transaction.*}
+      transaction-status: ${TRANSACTION_STATUS_ROUTING_KEY:transaction.status.*}
