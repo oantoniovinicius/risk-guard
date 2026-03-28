@@ -26,6 +26,11 @@ spring:
     password: ${RABBITMQ_DEFAULT_PASS}
 
 app:
+  security:
+    jwt:
+      secret-base64: ${APP_JWT_SECRET_BASE64}
+      expiration-ms: ${APP_JWT_EXPIRATION_MS:3600000}
+      issuer: ${APP_JWT_ISSUER:risk-guard}
   messaging:
     exchange: ${APP_MESSAGING_EXCHANGE:riskguard.events}
     consumer:

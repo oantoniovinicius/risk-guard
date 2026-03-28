@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.identity.domain.exception.InvalidUserStatusTransitionException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -67,5 +68,12 @@ public class User {
 
     public boolean isSuspect() {
         return this.suspect;
+    }
+
+    public void activate() {
+        if (status != UserStatus.PENDING) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.ACTIVE);
+        }
+        this.status = UserStatus.ACTIVE;
     }
 }

@@ -40,6 +40,7 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.JwtService;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
@@ -76,6 +77,9 @@ class TransferControllerIntegrationTest {
 
     @Autowired
     private RabbitAdmin rabbitAdmin;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private Queue transactionCreatedTestQueue;
@@ -115,6 +119,7 @@ class TransferControllerIntegrationTest {
                 .writeValueAsString(new TransferRequestPayload(senderId, receiverId, transferAmount));
 
         mockMvc.perform(post("/transfers")
+                .header("Authorization", bearerToken(sender))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isOk())
@@ -143,6 +148,39 @@ class TransferControllerIntegrationTest {
         assertEquals(0, transferAmount.compareTo(eventPayload.get("amount").decimalValue()));
     }
 
+    @Test
+    void shouldReturnUnauthorizedWhenCreateTransferWithoutToken() throws Exception {
+        String requestBody = objectMapper
+                .writeValueAsString(new TransferRequestPayload(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("10.00")));
+
+        mockMvc.perform(post("/transfers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldBlockTransferCreationWhenUserIsPending() throws Exception {
+        User sender = userRepository
+                .save(new User(null, "Pending Sender", "pending@example.com", "12345670001", Role.USER, UserStatus.PENDING));
+        User receiver = userRepository
+                .save(new User(null, "Receiver", "pending.receiver@example.com", "12345670002", Role.USER, UserStatus.ACTIVE));
+
+        accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
+                null, sender.getId(), new BigDecimal("500.00"), BigDecimal.ZERO));
+        accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
+                null, receiver.getId(), new BigDecimal("250.00"), BigDecimal.ZERO));
+
+        String requestBody = objectMapper
+                .writeValueAsString(new TransferRequestPayload(sender.getId(), receiver.getId(), new BigDecimal("30.00")));
+
+        mockMvc.perform(post("/transfers")
+                .header("Authorization", bearerToken(sender))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isConflict());
+    }
+
     private Message awaitMessage() throws InterruptedException {
         long deadline = System.nanoTime() + MESSAGE_TIMEOUT.toNanos();
 
@@ -156,6 +194,10 @@ class TransferControllerIntegrationTest {
         }
 
         throw new AssertionError("Timed out waiting for RabbitMQ message");
+    }
+
+    private String bearerToken(User user) {
+        return "Bearer " + jwtService.generateToken(user);
     }
 
     record TransferRequestPayload(UUID senderId, UUID receiverId, BigDecimal amount) {
@@ -189,6 +231,7 @@ class TransferControllerIntegrationTest {
                 java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/transfers/{transactionId}/customer-confirmation", transaction.getId())
+                .header("Authorization", bearerToken(sender))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("APPROVE"))))
                 .andExpect(status().isNoContent());
@@ -230,6 +273,7 @@ class TransferControllerIntegrationTest {
                 java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/transfers/{transactionId}/customer-confirmation", transaction.getId())
+                .header("Authorization", bearerToken(sender))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("REPORT_FRAUD"))))
                 .andExpect(status().isNoContent());
@@ -254,6 +298,9 @@ class TransferControllerIntegrationTest {
                 .save(new User(null, "Sender A1", "sender.a1@example.com", "12345000003", Role.USER, UserStatus.ACTIVE));
         User receiver = userRepository
                 .save(new User(null, "Receiver A1", "receiver.a1@example.com", "22345000003", Role.USER, UserStatus.ACTIVE));
+        User analyst = userRepository
+                .save(new User(null, "Analyst A1", "analyst.a1@example.com", "32345000003", Role.ANALYST,
+                        UserStatus.ACTIVE));
 
         accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
                 null, sender.getId(), new BigDecimal("40.00"), new BigDecimal("80.00")));
@@ -270,6 +317,7 @@ class TransferControllerIntegrationTest {
                 java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/transfers/{transactionId}/analyst-decision", transaction.getId())
+                .header("Authorization", bearerToken(analyst))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new AnalystDecisionPayload("DENY"))))
                 .andExpect(status().isNoContent());
@@ -291,6 +339,9 @@ class TransferControllerIntegrationTest {
                 .save(new User(null, "Sender A3", "sender.a3@example.com", "12345000005", Role.USER, UserStatus.ACTIVE));
         User receiver = userRepository
                 .save(new User(null, "Receiver A3", "receiver.a3@example.com", "22345000005", Role.USER, UserStatus.ACTIVE));
+        User analyst = userRepository
+                .save(new User(null, "Analyst A3", "analyst.a3@example.com", "32345000005", Role.ANALYST,
+                        UserStatus.ACTIVE));
 
         accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
                 null, sender.getId(), new BigDecimal("40.00"), new BigDecimal("80.00")));
@@ -307,6 +358,7 @@ class TransferControllerIntegrationTest {
                 java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/transfers/{transactionId}/analyst-decision", transaction.getId())
+                .header("Authorization", bearerToken(analyst))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new AnalystDecisionPayload("APPROVE"))))
                 .andExpect(status().isNoContent());
@@ -332,6 +384,9 @@ class TransferControllerIntegrationTest {
                 .save(new User(null, "Sender A2", "sender.a2@example.com", "12345000004", Role.USER, UserStatus.ACTIVE));
         User receiver = userRepository
                 .save(new User(null, "Receiver A2", "receiver.a2@example.com", "22345000004", Role.USER, UserStatus.ACTIVE));
+        User analyst = userRepository
+                .save(new User(null, "Analyst A2", "analyst.a2@example.com", "32345000004", Role.ANALYST,
+                        UserStatus.ACTIVE));
 
         accountRepository.save(new com.galeritos.risk_guard.banking.domain.model.Account(
                 null, sender.getId(), new BigDecimal("40.00"), new BigDecimal("80.00")));
@@ -350,6 +405,7 @@ class TransferControllerIntegrationTest {
         java.time.LocalDateTime before = java.time.LocalDateTime.now();
 
         mockMvc.perform(post("/transfers/{transactionId}/analyst-decision", transaction.getId())
+                .header("Authorization", bearerToken(analyst))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new AnalystDecisionPayload("REQUEST_CUSTOMER_CONFIRMATION"))))
                 .andExpect(status().isNoContent());

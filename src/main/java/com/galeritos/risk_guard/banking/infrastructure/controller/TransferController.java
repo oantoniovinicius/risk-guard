@@ -18,6 +18,7 @@ import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CustomerConfirmationRequest;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTransferRequest;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTransferResponse;
+import com.galeritos.risk_guard.identity.application.usecase.TransferAccessGuardUseCase;
 
 @RestController
 @RequestMapping("/transfers")
@@ -25,17 +26,22 @@ public class TransferController {
     private final CreateTransferUseCase createTransferUseCase;
     private final HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase;
     private final HandleAnalystDecisionUseCase handleAnalystDecisionUseCase;
+    private final TransferAccessGuardUseCase transferAccessGuardUseCase;
 
     public TransferController(CreateTransferUseCase createTransferUseCase,
             HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase,
-            HandleAnalystDecisionUseCase handleAnalystDecisionUseCase) {
+            HandleAnalystDecisionUseCase handleAnalystDecisionUseCase,
+            TransferAccessGuardUseCase transferAccessGuardUseCase) {
         this.createTransferUseCase = createTransferUseCase;
         this.handleCustomerConfirmationUseCase = handleCustomerConfirmationUseCase;
         this.handleAnalystDecisionUseCase = handleAnalystDecisionUseCase;
+        this.transferAccessGuardUseCase = transferAccessGuardUseCase;
     }
 
     @PostMapping
     public ResponseEntity<CreateTransferResponse> createTransfer(@RequestBody CreateTransferRequest request) {
+        transferAccessGuardUseCase.assertCanCreateTransfer(request.senderId());
+
         CreateTransferCommand command = new CreateTransferCommand(
                 request.senderId(),
                 request.receiverId(),
@@ -58,6 +64,7 @@ public class TransferController {
     public ResponseEntity<Void> confirmTransactionByCustomer(
             @PathVariable UUID transactionId,
             @RequestBody CustomerConfirmationRequest request) {
+        transferAccessGuardUseCase.assertCanConfirmCustomerDecision(transactionId);
         handleCustomerConfirmationUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }
@@ -66,6 +73,7 @@ public class TransferController {
     public ResponseEntity<Void> decideTransactionAsAnalyst(
             @PathVariable UUID transactionId,
             @RequestBody AnalystDecisionRequest request) {
+        transferAccessGuardUseCase.assertCanActAsAnalyst();
         handleAnalystDecisionUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }

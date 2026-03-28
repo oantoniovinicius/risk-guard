@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByDocument(String document);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
                 SELECT u FROM User u
