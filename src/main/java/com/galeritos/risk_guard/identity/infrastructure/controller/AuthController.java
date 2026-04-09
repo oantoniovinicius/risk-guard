@@ -37,8 +37,7 @@ public class AuthController {
                 request.name(),
                 request.email(),
                 request.document(),
-                request.password(),
-                request.role()));
+                request.password()));
 
         RegisterResponse response = new RegisterResponse(
                 user.getId(),

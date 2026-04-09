@@ -11,12 +11,14 @@ public record MessagingProperties(
     public record Consumer(
             String transactionCreatedQueue,
             String transactionAnalyzedQueue,
-            String transactionStatusQueue) {
+            String transactionStatusQueue,
+            String userApprovedQueue) {
     }
 
     public record Routing(
             String transactionCreated,
             String transactionAnalyzed,
-            String transactionStatus) {
+            String transactionStatus,
+            String userApproved) {
     }
 }

@@ -8,6 +8,7 @@ public final class EventTypes {
     public static final String TRANSACTION_APPROVED = "transaction.status.approved";
     public static final String TRANSACTION_DENIED = "transaction.status.denied";
     public static final String TRANSACTION_FRAUD_CONFIRMED = "transaction.status.fraud_confirmed";
+    public static final String USER_APPROVED = "user.approved";
 
     private EventTypes() {
     }

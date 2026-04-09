@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.galeritos.risk_guard.identity.application.usecase.dto.RegisterUserCommand;
 import com.galeritos.risk_guard.identity.domain.exception.EmailAlreadyInUseException;
-import com.galeritos.risk_guard.identity.domain.exception.InvalidRegistrationRoleException;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
@@ -46,8 +45,7 @@ class RegisterUserUseCaseTest {
                 "Alice",
                 "alice@example.com",
                 "12345678901",
-                "StrongPass123",
-                Role.USER);
+                "StrongPass123");
 
         when(userRepository.existsByEmail(command.email())).thenReturn(false);
         when(userRepository.existsByDocument(command.document())).thenReturn(false);
@@ -57,6 +55,7 @@ class RegisterUserUseCaseTest {
         User user = useCase.execute(command);
 
         assertEquals(UserStatus.PENDING, user.getStatus());
+        assertEquals(Role.USER, user.getRole());
         verify(userCredentialRepository).save(any());
     }
 
@@ -66,23 +65,10 @@ class RegisterUserUseCaseTest {
                 "Alice",
                 "alice@example.com",
                 "12345678901",
-                "StrongPass123",
-                Role.USER);
+                "StrongPass123");
 
         when(userRepository.existsByEmail(command.email())).thenReturn(true);
 
         assertThrows(EmailAlreadyInUseException.class, () -> useCase.execute(command));
-    }
-
-    @Test
-    void shouldFailWhenRegistrationRoleIsNotUser() {
-        RegisterUserCommand command = new RegisterUserCommand(
-                "Admin",
-                "admin@example.com",
-                "12345678901",
-                "StrongPass123",
-                Role.ADMIN);
-
-        assertThrows(InvalidRegistrationRoleException.class, () -> useCase.execute(command));
     }
 }

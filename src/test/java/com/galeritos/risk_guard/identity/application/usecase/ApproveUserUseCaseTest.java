@@ -2,6 +2,7 @@ package com.galeritos.risk_guard.identity.application.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.galeritos.risk_guard.identity.application.port.out.IdentityEventPublisher;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
@@ -24,11 +26,14 @@ class ApproveUserUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private IdentityEventPublisher identityEventPublisher;
+
     private ApproveUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new ApproveUserUseCase(userRepository);
+        useCase = new ApproveUserUseCase(userRepository, identityEventPublisher);
     }
 
     @Test
@@ -41,6 +46,7 @@ class ApproveUserUseCaseTest {
 
         User approved = useCase.execute(userId);
         assertEquals(UserStatus.ACTIVE, approved.getStatus());
+        verify(identityEventPublisher).publishUserApproved(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

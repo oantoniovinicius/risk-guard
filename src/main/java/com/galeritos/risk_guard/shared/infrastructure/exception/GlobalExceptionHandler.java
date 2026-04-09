@@ -17,7 +17,6 @@ import com.galeritos.risk_guard.identity.domain.exception.DocumentAlreadyInUseEx
 import com.galeritos.risk_guard.identity.domain.exception.EmailAlreadyInUseException;
 import com.galeritos.risk_guard.identity.domain.exception.ForbiddenTransferOperationException;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidCredentialsException;
-import com.galeritos.risk_guard.identity.domain.exception.InvalidRegistrationRoleException;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidUserStatusTransitionException;
 import com.galeritos.risk_guard.identity.domain.exception.UnauthenticatedAccessException;
 import com.galeritos.risk_guard.identity.domain.exception.UserCredentialDisabledException;
@@ -96,7 +95,7 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
-    @ExceptionHandler({ ForbiddenTransferOperationException.class, InvalidRegistrationRoleException.class })
+    @ExceptionHandler({ ForbiddenTransferOperationException.class })
     public ResponseEntity<?> handleForbiddenTransfer(RuntimeException ex) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)

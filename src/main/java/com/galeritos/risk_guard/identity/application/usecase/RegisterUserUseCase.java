@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.galeritos.risk_guard.identity.application.usecase.dto.RegisterUserCommand;
 import com.galeritos.risk_guard.identity.domain.exception.DocumentAlreadyInUseException;
 import com.galeritos.risk_guard.identity.domain.exception.EmailAlreadyInUseException;
-import com.galeritos.risk_guard.identity.domain.exception.InvalidRegistrationRoleException;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.UserCredential;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
@@ -32,10 +31,6 @@ public class RegisterUserUseCase {
 
     @Transactional
     public User execute(RegisterUserCommand command) {
-        if (command.role() != Role.USER) {
-            throw new InvalidRegistrationRoleException(command.role());
-        }
-
         String normalizedEmail = command.email().trim().toLowerCase();
         String normalizedDocument = command.document().trim();
 
@@ -51,7 +46,7 @@ public class RegisterUserUseCase {
                 command.name().trim(),
                 normalizedEmail,
                 normalizedDocument,
-                command.role(),
+                Role.USER,
                 UserStatus.PENDING);
         user = userRepository.save(user);
 
