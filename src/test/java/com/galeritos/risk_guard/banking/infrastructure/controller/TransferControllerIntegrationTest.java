@@ -3,6 +3,7 @@ package com.galeritos.risk_guard.banking.infrastructure.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -179,6 +180,31 @@ class TransferControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnTransactionStatusForAuthenticatedUser() throws Exception {
+        User sender = userRepository
+                .save(new User(null, "Sender S1", "sender.s1@example.com", "12345111111", Role.USER, UserStatus.ACTIVE));
+        User receiver = userRepository
+                .save(new User(null, "Receiver S1", "receiver.s1@example.com", "22345111111", Role.USER, UserStatus.ACTIVE));
+
+        Transaction transaction = transactionRepository.save(new Transaction(
+                sender.getId(),
+                receiver.getId(),
+                new BigDecimal("220.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                java.time.LocalDateTime.now()));
+
+        mockMvc.perform(get("/transfers/{transactionId}/status", transaction.getId())
+                .header("Authorization", bearerToken(sender)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactionId").value(transaction.getId().toString()))
+                .andExpect(jsonPath("$.status").value("AWAITING_ANALYST"))
+                .andExpect(jsonPath("$.financialStatus").value("RESERVED"))
+                .andExpect(jsonPath("$.amount").value(220.00));
     }
 
     private Message awaitMessage() throws InterruptedException {

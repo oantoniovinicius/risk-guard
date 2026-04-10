@@ -59,6 +59,7 @@ class CreateTransferUseCaseTest {
                 new BigDecimal("25.00"));
 
         when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.existsByUserId(receiverId)).thenReturn(true);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
             Transaction transaction = invocation.getArgument(0);
             ReflectionTestUtils.setField(transaction, "id", transactionId);
@@ -114,6 +115,7 @@ class CreateTransferUseCaseTest {
         CreateTransferCommand command = new CreateTransferCommand(senderId, receiverId, BigDecimal.ZERO);
 
         when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.existsByUserId(receiverId)).thenReturn(true);
 
         assertThrows(InvalidTransferException.class, () -> useCase.execute(command));
 
@@ -146,11 +148,30 @@ class CreateTransferUseCaseTest {
         CreateTransferCommand command = new CreateTransferCommand(senderId, receiverId, new BigDecimal("50.00"));
 
         when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.existsByUserId(receiverId)).thenReturn(true);
 
         assertThrows(InsufficientBalanceException.class, () -> useCase.execute(command));
 
         assertEquals(new BigDecimal("40.00"), senderAccount.getBalance());
         assertEquals(new BigDecimal("5.00"), senderAccount.getReservedBalance());
+        verify(accountRepository, never()).save(any(Account.class));
+        verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(eventPublisher, never()).publishTransactionCreated(any());
+    }
+
+    @Test
+    void shouldThrowWhenReceiverAccountDoesNotExist() {
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
+        Account senderAccount = new Account(UUID.randomUUID(), senderId, new BigDecimal("250.00"), BigDecimal.ZERO);
+        CreateTransferCommand command = new CreateTransferCommand(senderId, receiverId, new BigDecimal("10.00"));
+
+        when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.existsByUserId(receiverId)).thenReturn(false);
+
+        AccountNotFoundException ex = assertThrows(AccountNotFoundException.class, () -> useCase.execute(command));
+        assertEquals("Receiver account not found.", ex.getMessage());
+
         verify(accountRepository, never()).save(any(Account.class));
         verify(transactionRepository, never()).save(any(Transaction.class));
         verify(eventPublisher, never()).publishTransactionCreated(any());
