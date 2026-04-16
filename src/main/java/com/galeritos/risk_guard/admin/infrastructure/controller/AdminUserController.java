@@ -11,21 +11,31 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.ApproveUserResponse;
 import com.galeritos.risk_guard.identity.application.usecase.ApproveUserUseCase;
+import com.galeritos.risk_guard.identity.application.usecase.DenyUserUseCase;
 import com.galeritos.risk_guard.identity.domain.model.User;
 
 @RestController
 @RequestMapping("/admin/users")
 public class AdminUserController {
     private final ApproveUserUseCase approveUserUseCase;
+    private final DenyUserUseCase denyUserUseCase;
 
-    public AdminUserController(ApproveUserUseCase approveUserUseCase) {
+    public AdminUserController(ApproveUserUseCase approveUserUseCase, DenyUserUseCase denyUserUseCase) {
         this.approveUserUseCase = approveUserUseCase;
+        this.denyUserUseCase = denyUserUseCase;
     }
 
     @PostMapping("/{userId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApproveUserResponse> approveUser(@PathVariable UUID userId) {
         User user = approveUserUseCase.execute(userId);
+        return ResponseEntity.ok(new ApproveUserResponse(user.getId(), user.getStatus()));
+    }
+
+    @PostMapping("/{userId}/deny")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApproveUserResponse> denyUser(@PathVariable UUID userId) {
+        User user = denyUserUseCase.execute(userId);
         return ResponseEntity.ok(new ApproveUserResponse(user.getId(), user.getStatus()));
     }
 }

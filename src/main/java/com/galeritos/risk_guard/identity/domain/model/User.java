@@ -76,4 +76,11 @@ public class User {
         }
         this.status = UserStatus.ACTIVE;
     }
+
+    public void reject() {
+        if (status != UserStatus.PENDING) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.REJECTED);
+        }
+        this.status = UserStatus.REJECTED;
+    }
 }

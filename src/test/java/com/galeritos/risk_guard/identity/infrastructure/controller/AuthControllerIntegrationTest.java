@@ -155,4 +155,67 @@ class AuthControllerIntegrationTest {
         JsonNode node = objectMapper.readTree(response);
         assertTrue(node.get("accessToken").asText().length() > 20);
     }
+
+    @Test
+    void shouldAllowAdminToDenyPendingUser() throws Exception {
+        User pendingUser = userRepository
+                .save(new User(null, "Pending User", "pending.deny@example.com", "12345678888", Role.USER,
+                        UserStatus.PENDING));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                pendingUser,
+                passwordEncoder.encode("StrongPass123"),
+                true));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.deny@example.com",
+                "99988877711",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                admin,
+                passwordEncoder.encode("AdminPass123"),
+                true));
+
+        mockMvc.perform(post("/admin/users/{userId}/deny", pendingUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(pendingUser.getId().toString()))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        User updated = userRepository.findById(pendingUser.getId()).orElseThrow();
+        assertEquals(UserStatus.REJECTED, updated.getStatus());
+    }
+
+    @Test
+    void shouldForbidNonAdminToDenyPendingUser() throws Exception {
+        User pendingUser = userRepository
+                .save(new User(null, "Pending User", "pending.forbidden@example.com", "12345678777", Role.USER,
+                        UserStatus.PENDING));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                pendingUser,
+                passwordEncoder.encode("StrongPass123"),
+                true));
+
+        User analyst = userRepository.save(new User(
+                null,
+                "Analyst User",
+                "analyst.deny@example.com",
+                "99988877722",
+                Role.ANALYST,
+                UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                analyst,
+                passwordEncoder.encode("AnalystPass123"),
+                true));
+
+        mockMvc.perform(post("/admin/users/{userId}/deny", pendingUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
+                .andExpect(status().isForbidden());
+    }
 }
