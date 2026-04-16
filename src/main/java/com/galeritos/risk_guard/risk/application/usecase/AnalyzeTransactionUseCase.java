@@ -53,7 +53,7 @@ public class AnalyzeTransactionUseCase {
     }
 
     private RiskProfile evaluate(BigDecimal amount) {
-        if (amount.compareTo(new BigDecimal("1000.00")) >= 0) {
+        if (amount.compareTo(new BigDecimal("900.00")) >= 0) {
             return new RiskProfile(
                     new BigDecimal("0.92"),
                     RiskLevel.HIGH,

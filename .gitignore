@@ -28,6 +28,12 @@ target/
 .env.*
 
 # =========================
+# Local Codex context
+# =========================
+CODEX.md
+docs/context/
+
+# =========================
 # Docker
 # =========================
 docker-compose.override.yml

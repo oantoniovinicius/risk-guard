@@ -3,6 +3,7 @@ package com.galeritos.risk_guard.banking.infrastructure.controller;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.galeritos.risk_guard.banking.application.usecase.CreateTransferUseCase;
+import com.galeritos.risk_guard.banking.application.usecase.GetTransactionStatusUseCase;
 import com.galeritos.risk_guard.banking.application.usecase.HandleAnalystDecisionUseCase;
 import com.galeritos.risk_guard.banking.application.usecase.HandleCustomerConfirmationUseCase;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.AnalystDecisionRequest;
@@ -18,24 +20,36 @@ import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CustomerConfirmationRequest;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTransferRequest;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTransferResponse;
+import com.galeritos.risk_guard.banking.infrastructure.controller.dto.TransactionStatusResponse;
+import com.galeritos.risk_guard.identity.application.usecase.TransferAccessGuardUseCase;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/transfers")
 public class TransferController {
     private final CreateTransferUseCase createTransferUseCase;
+    private final GetTransactionStatusUseCase getTransactionStatusUseCase;
     private final HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase;
     private final HandleAnalystDecisionUseCase handleAnalystDecisionUseCase;
+    private final TransferAccessGuardUseCase transferAccessGuardUseCase;
 
     public TransferController(CreateTransferUseCase createTransferUseCase,
+            GetTransactionStatusUseCase getTransactionStatusUseCase,
             HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase,
-            HandleAnalystDecisionUseCase handleAnalystDecisionUseCase) {
+            HandleAnalystDecisionUseCase handleAnalystDecisionUseCase,
+            TransferAccessGuardUseCase transferAccessGuardUseCase) {
         this.createTransferUseCase = createTransferUseCase;
+        this.getTransactionStatusUseCase = getTransactionStatusUseCase;
         this.handleCustomerConfirmationUseCase = handleCustomerConfirmationUseCase;
         this.handleAnalystDecisionUseCase = handleAnalystDecisionUseCase;
+        this.transferAccessGuardUseCase = transferAccessGuardUseCase;
     }
 
     @PostMapping
-    public ResponseEntity<CreateTransferResponse> createTransfer(@RequestBody CreateTransferRequest request) {
+    public ResponseEntity<CreateTransferResponse> createTransfer(@Valid @RequestBody CreateTransferRequest request) {
+        transferAccessGuardUseCase.assertCanCreateTransfer(request.senderId());
+
         CreateTransferCommand command = new CreateTransferCommand(
                 request.senderId(),
                 request.receiverId(),
@@ -54,10 +68,28 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{transactionId}/status")
+    public ResponseEntity<TransactionStatusResponse> getTransactionStatus(@PathVariable UUID transactionId) {
+        Transaction transaction = getTransactionStatusUseCase.execute(transactionId);
+        String riskLevel = transaction.getRiskLevel() == null ? null : transaction.getRiskLevel().name();
+        TransactionStatusResponse response = new TransactionStatusResponse(
+                transaction.getId(),
+                transaction.getStatus().name(),
+                transaction.getFinancialStatus().name(),
+                riskLevel,
+                transaction.getAmount(),
+                transaction.getSenderId(),
+                transaction.getReceiverId(),
+                transaction.getCustomerDecisionDeadlineAt(),
+                transaction.getCreatedAt());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{transactionId}/customer-confirmation")
     public ResponseEntity<Void> confirmTransactionByCustomer(
             @PathVariable UUID transactionId,
-            @RequestBody CustomerConfirmationRequest request) {
+            @Valid @RequestBody CustomerConfirmationRequest request) {
+        transferAccessGuardUseCase.assertCanConfirmCustomerDecision(transactionId);
         handleCustomerConfirmationUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }
@@ -65,7 +97,8 @@ public class TransferController {
     @PostMapping("/{transactionId}/analyst-decision")
     public ResponseEntity<Void> decideTransactionAsAnalyst(
             @PathVariable UUID transactionId,
-            @RequestBody AnalystDecisionRequest request) {
+            @Valid @RequestBody AnalystDecisionRequest request) {
+        transferAccessGuardUseCase.assertCanActAsAnalyst();
         handleAnalystDecisionUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }

@@ -44,6 +44,9 @@ public class CreateTransferUseCase {
 
         Account sender = accountRepository.findByUserIdForUpdate(command.senderId())
                 .orElseThrow(() -> new AccountNotFoundException("Sender account not found."));
+        if (!accountRepository.existsByUserId(command.receiverId())) {
+            throw new AccountNotFoundException("Receiver account not found.");
+        }
 
         if (command.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidTransferException("Transfer amount must be positive");

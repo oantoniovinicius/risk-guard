@@ -36,6 +36,11 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    Queue userApprovedQueue(MessagingProperties properties) {
+        return new Queue(properties.consumer().userApprovedQueue(), true);
+    }
+
+    @Bean
     Binding transactionCreatedBinding(
             @Qualifier("transactionCreatedQueue") Queue queue,
             TopicExchange transactionEventsExchange,
@@ -63,6 +68,16 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(queue)
                 .to(transactionEventsExchange)
                 .with(properties.routing().transactionStatus());
+    }
+
+    @Bean
+    Binding userApprovedBinding(
+            @Qualifier("userApprovedQueue") Queue queue,
+            TopicExchange transactionEventsExchange,
+            MessagingProperties properties) {
+        return BindingBuilder.bind(queue)
+                .to(transactionEventsExchange)
+                .with(properties.routing().userApproved());
     }
 
     @Bean

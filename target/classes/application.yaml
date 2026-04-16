@@ -26,13 +26,22 @@ spring:
     password: ${RABBITMQ_DEFAULT_PASS}
 
 app:
+  banking:
+    initial-balance: ${APP_BANKING_INITIAL_BALANCE:1000.00}
+  security:
+    jwt:
+      secret-base64: ${APP_JWT_SECRET_BASE64}
+      expiration-ms: ${APP_JWT_EXPIRATION_MS:3600000}
+      issuer: ${APP_JWT_ISSUER:risk-guard}
   messaging:
     exchange: ${APP_MESSAGING_EXCHANGE:riskguard.events}
     consumer:
       transaction-created-queue: ${TRANSACTION_CREATED_QUEUE:riskguard.risk.transaction-created}
       transaction-analyzed-queue: ${TRANSACTION_ANALYZED_QUEUE:riskguard.banking.transaction-analyzed}
       transaction-status-queue: ${TRANSACTION_STATUS_QUEUE:riskguard.notification.transaction-status}
+      user-approved-queue: ${USER_APPROVED_QUEUE:riskguard.banking.user-approved}
     routing:
       transaction-created: ${TRANSACTION_CREATED_ROUTING_KEY:transaction.created}
       transaction-analyzed: ${TRANSACTION_ANALYZED_ROUTING_KEY:transaction.analyzed}
       transaction-status: ${TRANSACTION_STATUS_ROUTING_KEY:transaction.status.*}
+      user-approved: ${USER_APPROVED_ROUTING_KEY:user.approved}
