@@ -4,5 +4,5 @@ import java.util.UUID;
 
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 
-public record ApproveUserResponse(UUID userId, UserStatus status) {
+public record AdminUserStatusResponse(UUID userId, UserStatus status) {
 }

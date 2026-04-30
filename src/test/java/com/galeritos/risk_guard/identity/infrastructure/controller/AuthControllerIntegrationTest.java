@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -215,6 +216,133 @@ class AuthControllerIntegrationTest {
                 true));
 
         mockMvc.perform(post("/admin/users/{userId}/deny", pendingUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldListPendingUsersForAdmin() throws Exception {
+        userRepository.save(new User(null, "Pending One", "pending.one@example.com", "12345000111", Role.USER, UserStatus.PENDING));
+        userRepository.save(new User(null, "Pending Two", "pending.two@example.com", "12345000112", Role.USER, UserStatus.PENDING));
+        userRepository.save(new User(null, "Active One", "active.one@example.com", "12345000113", Role.USER, UserStatus.ACTIVE));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.pending.list@example.com",
+                "99988870001",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(get("/admin/users/pending")
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[1].status").value("PENDING"));
+    }
+
+    @Test
+    void shouldReturnUserDetailForAdmin() throws Exception {
+        User target = userRepository.save(new User(
+                null,
+                "Detail User",
+                "detail.user@example.com",
+                "12345000999",
+                Role.USER,
+                UserStatus.PENDING));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.detail@example.com",
+                "99988870002",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(get("/admin/users/{userId}", target.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(target.getId().toString()))
+                .andExpect(jsonPath("$.email").value("detail.user@example.com"))
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void shouldForbidNonAdminToListPendingUsers() throws Exception {
+        User analyst = userRepository.save(new User(
+                null,
+                "Analyst User",
+                "analyst.pending.list@example.com",
+                "99988870003",
+                Role.ANALYST,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(get("/admin/users/pending")
+                .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowAdminToSuspendActiveUser() throws Exception {
+        User activeUser = userRepository
+                .save(new User(null, "Active User", "active.suspend@example.com", "12345000777", Role.USER,
+                        UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                activeUser,
+                passwordEncoder.encode("StrongPass123"),
+                true));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.suspend@example.com",
+                "99988870004",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                admin,
+                passwordEncoder.encode("AdminPass123"),
+                true));
+
+        mockMvc.perform(post("/admin/users/{userId}/suspend", activeUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(activeUser.getId().toString()))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        User updated = userRepository.findById(activeUser.getId()).orElseThrow();
+        assertEquals(UserStatus.REJECTED, updated.getStatus());
+    }
+
+    @Test
+    void shouldForbidNonAdminToSuspendUser() throws Exception {
+        User activeUser = userRepository
+                .save(new User(null, "Active User", "active.forbidden.suspend@example.com", "12345000778", Role.USER,
+                        UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                activeUser,
+                passwordEncoder.encode("StrongPass123"),
+                true));
+
+        User analyst = userRepository.save(new User(
+                null,
+                "Analyst User",
+                "analyst.suspend@example.com",
+                "99988870005",
+                Role.ANALYST,
+                UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null,
+                analyst,
+                passwordEncoder.encode("AnalystPass123"),
+                true));
+
+        mockMvc.perform(post("/admin/users/{userId}/suspend", activeUser.getId())
                 .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
                 .andExpect(status().isForbidden());
     }
