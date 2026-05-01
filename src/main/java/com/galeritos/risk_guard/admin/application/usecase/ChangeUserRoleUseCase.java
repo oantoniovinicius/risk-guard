@@ -1,23 +1,22 @@
-package com.galeritos.risk_guard.identity.application.usecase;
+package com.galeritos.risk_guard.admin.application.usecase;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.galeritos.risk_guard.admin.application.usecase.RecordAdminDecisionUseCase;
-import com.galeritos.risk_guard.admin.domain.model.enums.AdminDecisionAction;
+import com.galeritos.risk_guard.admin.domain.exception.InvalidRoleChangeException;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
 import com.galeritos.risk_guard.identity.domain.model.User;
-import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 
 @Service
-public class SuspendUserUseCase {
+public class ChangeUserRoleUseCase {
     private final UserRepository userRepository;
     private final RecordAdminDecisionUseCase recordAdminDecisionUseCase;
 
-    public SuspendUserUseCase(
+    public ChangeUserRoleUseCase(
             UserRepository userRepository,
             RecordAdminDecisionUseCase recordAdminDecisionUseCase) {
         this.userRepository = userRepository;
@@ -25,18 +24,18 @@ public class SuspendUserUseCase {
     }
 
     @Transactional
-    public User execute(UUID userId) {
+    public User execute(UUID userId, Role requestedRole) {
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        UserStatus fromStatus = user.getStatus();
-        user.suspend();
+        Role currentRole = user.getRole();
+        if (currentRole == requestedRole) {
+            throw new InvalidRoleChangeException(userId, currentRole, requestedRole);
+        }
+
+        user.changeRole(requestedRole);
         user = userRepository.save(user);
-        recordAdminDecisionUseCase.recordStatusChange(
-                AdminDecisionAction.SUSPEND_USER,
-                user,
-                fromStatus,
-                user.getStatus());
+        recordAdminDecisionUseCase.recordRoleChange(user, currentRole, requestedRole);
         return user;
     }
 }

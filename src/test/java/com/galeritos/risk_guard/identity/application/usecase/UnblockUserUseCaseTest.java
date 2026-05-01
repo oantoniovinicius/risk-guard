@@ -21,30 +21,31 @@ import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class DenyUserUseCaseTest {
+class UnblockUserUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
     @Mock
     private RecordAdminDecisionUseCase recordAdminDecisionUseCase;
 
-    private DenyUserUseCase useCase;
+    private UnblockUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new DenyUserUseCase(userRepository, recordAdminDecisionUseCase);
+        useCase = new UnblockUserUseCase(userRepository, recordAdminDecisionUseCase);
     }
 
     @Test
-    void shouldDenyPendingUser() {
+    void shouldUnblockBlockedUser() {
         UUID userId = UUID.randomUUID();
-        User pendingUser = new User(userId, "Pending", "pending@example.com", "12345678901", Role.USER, UserStatus.PENDING);
+        User blockedUser = new User(userId, "Blocked", "blocked.unblock@example.com", "12345678933", Role.USER,
+                UserStatus.BLOCKED);
 
-        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(pendingUser));
-        when(userRepository.save(pendingUser)).thenReturn(pendingUser);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(blockedUser));
+        when(userRepository.save(blockedUser)).thenReturn(blockedUser);
 
-        User denied = useCase.execute(userId);
-        assertEquals(UserStatus.REJECTED, denied.getStatus());
+        User unblocked = useCase.execute(userId);
+        assertEquals(UserStatus.ACTIVE, unblocked.getStatus());
     }
 
     @Test

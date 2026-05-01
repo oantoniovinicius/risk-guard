@@ -21,30 +21,31 @@ import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class DenyUserUseCaseTest {
+class UnsuspendUserUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
     @Mock
     private RecordAdminDecisionUseCase recordAdminDecisionUseCase;
 
-    private DenyUserUseCase useCase;
+    private UnsuspendUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new DenyUserUseCase(userRepository, recordAdminDecisionUseCase);
+        useCase = new UnsuspendUserUseCase(userRepository, recordAdminDecisionUseCase);
     }
 
     @Test
-    void shouldDenyPendingUser() {
+    void shouldUnsuspendSuspendedUser() {
         UUID userId = UUID.randomUUID();
-        User pendingUser = new User(userId, "Pending", "pending@example.com", "12345678901", Role.USER, UserStatus.PENDING);
+        User suspendedUser = new User(userId, "Suspended", "rejected.unsuspend@example.com", "12345678932", Role.USER,
+                UserStatus.SUSPENDED);
 
-        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(pendingUser));
-        when(userRepository.save(pendingUser)).thenReturn(pendingUser);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(suspendedUser));
+        when(userRepository.save(suspendedUser)).thenReturn(suspendedUser);
 
-        User denied = useCase.execute(userId);
-        assertEquals(UserStatus.REJECTED, denied.getStatus());
+        User unsuspended = useCase.execute(userId);
+        assertEquals(UserStatus.ACTIVE, unsuspended.getStatus());
     }
 
     @Test

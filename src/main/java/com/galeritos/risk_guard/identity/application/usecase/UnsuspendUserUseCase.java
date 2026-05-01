@@ -13,11 +13,11 @@ import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 
 @Service
-public class SuspendUserUseCase {
+public class UnsuspendUserUseCase {
     private final UserRepository userRepository;
     private final RecordAdminDecisionUseCase recordAdminDecisionUseCase;
 
-    public SuspendUserUseCase(
+    public UnsuspendUserUseCase(
             UserRepository userRepository,
             RecordAdminDecisionUseCase recordAdminDecisionUseCase) {
         this.userRepository = userRepository;
@@ -30,10 +30,10 @@ public class SuspendUserUseCase {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         UserStatus fromStatus = user.getStatus();
-        user.suspend();
+        user.unsuspend();
         user = userRepository.save(user);
         recordAdminDecisionUseCase.recordStatusChange(
-                AdminDecisionAction.SUSPEND_USER,
+                AdminDecisionAction.UNSUSPEND_USER,
                 user,
                 fromStatus,
                 user.getStatus());

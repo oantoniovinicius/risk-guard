@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -312,10 +313,10 @@ class AuthControllerIntegrationTest {
                 .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(activeUser.getId().toString()))
-                .andExpect(jsonPath("$.status").value("REJECTED"));
+                .andExpect(jsonPath("$.status").value("SUSPENDED"));
 
         User updated = userRepository.findById(activeUser.getId()).orElseThrow();
-        assertEquals(UserStatus.REJECTED, updated.getStatus());
+        assertEquals(UserStatus.SUSPENDED, updated.getStatus());
     }
 
     @Test
@@ -345,5 +346,154 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/admin/users/{userId}/suspend", activeUser.getId())
                 .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowAdminToBlockActiveUser() throws Exception {
+        User activeUser = userRepository
+                .save(new User(null, "Active User", "active.block@example.com", "12345000779", Role.USER,
+                        UserStatus.ACTIVE));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.block@example.com",
+                "99988870006",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(post("/admin/users/{userId}/block", activeUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(activeUser.getId().toString()))
+                .andExpect(jsonPath("$.status").value("BLOCKED"));
+
+        User updated = userRepository.findById(activeUser.getId()).orElseThrow();
+        assertEquals(UserStatus.BLOCKED, updated.getStatus());
+    }
+
+    @Test
+    void shouldAllowAdminToUnsuspendRejectedUser() throws Exception {
+        User suspendedUser = userRepository
+                .save(new User(null, "Suspended User", "suspended.unsuspend@example.com", "12345000780", Role.USER,
+                        UserStatus.SUSPENDED));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.unsuspend@example.com",
+                "99988870007",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(post("/admin/users/{userId}/unsuspend", suspendedUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(suspendedUser.getId().toString()))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        User updated = userRepository.findById(suspendedUser.getId()).orElseThrow();
+        assertEquals(UserStatus.ACTIVE, updated.getStatus());
+    }
+
+    @Test
+    void shouldAllowAdminToUnblockRejectedUser() throws Exception {
+        User blockedUser = userRepository
+                .save(new User(null, "Blocked User", "blocked.unblock@example.com", "12345000781", Role.USER,
+                        UserStatus.BLOCKED));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.unblock@example.com",
+                "99988870008",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(post("/admin/users/{userId}/unblock", blockedUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(blockedUser.getId().toString()))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        User updated = userRepository.findById(blockedUser.getId()).orElseThrow();
+        assertEquals(UserStatus.ACTIVE, updated.getStatus());
+    }
+
+    @Test
+    void shouldForbidNonAdminToUnsuspendUser() throws Exception {
+        User suspendedUser = userRepository
+                .save(new User(null, "Suspended User", "suspended.forbidden.unsuspend@example.com", "12345000782",
+                        Role.USER, UserStatus.SUSPENDED));
+
+        User analyst = userRepository.save(new User(
+                null,
+                "Analyst User",
+                "analyst.unsuspend@example.com",
+                "99988870009",
+                Role.ANALYST,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(post("/admin/users/{userId}/unsuspend", suspendedUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(analyst)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowAdminToChangeUserRole() throws Exception {
+        User target = userRepository.save(new User(
+                null,
+                "Role Target",
+                "role.target@example.com",
+                "12345000783",
+                Role.USER,
+                UserStatus.ACTIVE));
+
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.role.change@example.com",
+                "99988870010",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(patch("/admin/users/{userId}/role", target.getId())
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ANALYST\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(target.getId().toString()))
+                .andExpect(jsonPath("$.role").value("ANALYST"));
+
+        User updated = userRepository.findById(target.getId()).orElseThrow();
+        assertEquals(Role.ANALYST, updated.getRole());
+    }
+
+    @Test
+    void shouldAllowAdminToPatchAdminParameters() throws Exception {
+        User admin = userRepository.save(new User(
+                null,
+                "Admin User",
+                "admin.parameters@example.com",
+                "99988870011",
+                Role.ADMIN,
+                UserStatus.ACTIVE));
+
+        mockMvc.perform(patch("/admin/parameters")
+                .header("Authorization", "Bearer " + jwtService.generateToken(admin))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "mediumRiskThreshold": 0.65,
+                          "highRiskThreshold": 0.93,
+                          "businessStartTime": "09:00",
+                          "businessEndTime": "20:00"
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mediumRiskThreshold").value(0.65))
+                .andExpect(jsonPath("$.highRiskThreshold").value(0.93))
+                .andExpect(jsonPath("$.businessStartTime").value("09:00:00"))
+                .andExpect(jsonPath("$.businessEndTime").value("20:00:00"));
     }
 }

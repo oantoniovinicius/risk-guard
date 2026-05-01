@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.galeritos.risk_guard.admin.application.usecase.RecordAdminDecisionUseCase;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
@@ -24,11 +25,14 @@ class SuspendUserUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private RecordAdminDecisionUseCase recordAdminDecisionUseCase;
+
     private SuspendUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new SuspendUserUseCase(userRepository);
+        useCase = new SuspendUserUseCase(userRepository, recordAdminDecisionUseCase);
     }
 
     @Test
@@ -40,7 +44,7 @@ class SuspendUserUseCaseTest {
         when(userRepository.save(activeUser)).thenReturn(activeUser);
 
         User suspended = useCase.execute(userId);
-        assertEquals(UserStatus.REJECTED, suspended.getStatus());
+        assertEquals(UserStatus.SUSPENDED, suspended.getStatus());
     }
 
     @Test

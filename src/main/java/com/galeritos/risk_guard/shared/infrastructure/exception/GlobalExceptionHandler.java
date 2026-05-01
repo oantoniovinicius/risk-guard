@@ -7,6 +7,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.galeritos.risk_guard.admin.domain.exception.InvalidAdminSettingsException;
+import com.galeritos.risk_guard.admin.domain.exception.InvalidRoleChangeException;
 import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
@@ -132,5 +134,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse("Access denied."));
+    }
+
+    @ExceptionHandler({ InvalidRoleChangeException.class, InvalidAdminSettingsException.class })
+    public ResponseEntity<?> handleBadRequest(RuntimeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ex.getMessage()));
     }
 }

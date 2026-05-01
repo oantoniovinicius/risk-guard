@@ -86,8 +86,33 @@ public class User {
 
     public void suspend() {
         if (status != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusTransitionException(status, UserStatus.REJECTED);
+            throw new InvalidUserStatusTransitionException(status, UserStatus.SUSPENDED);
         }
-        this.status = UserStatus.REJECTED;
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void unsuspend() {
+        if (status != UserStatus.SUSPENDED) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.ACTIVE);
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void block() {
+        if (status != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.BLOCKED);
+        }
+        this.status = UserStatus.BLOCKED;
+    }
+
+    public void unblock() {
+        if (status != UserStatus.BLOCKED) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.ACTIVE);
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = newRole;
     }
 }
