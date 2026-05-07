@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user/pin").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/transfers").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/transfers/*/customer-confirmation").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/transfers/*/analyst-decision")

@@ -90,7 +90,7 @@ public class TransferController {
             @PathVariable UUID transactionId,
             @Valid @RequestBody CustomerConfirmationRequest request) {
         transferAccessGuardUseCase.assertCanConfirmCustomerDecision(transactionId);
-        handleCustomerConfirmationUseCase.execute(transactionId, request.decision());
+        handleCustomerConfirmationUseCase.execute(transactionId, request.decision(), request.pin());
         return ResponseEntity.noContent().build();
     }
 

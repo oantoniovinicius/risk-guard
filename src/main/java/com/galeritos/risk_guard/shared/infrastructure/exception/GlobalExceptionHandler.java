@@ -19,7 +19,10 @@ import com.galeritos.risk_guard.identity.domain.exception.DocumentAlreadyInUseEx
 import com.galeritos.risk_guard.identity.domain.exception.EmailAlreadyInUseException;
 import com.galeritos.risk_guard.identity.domain.exception.ForbiddenTransferOperationException;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidCredentialsException;
+import com.galeritos.risk_guard.identity.domain.exception.InvalidPinException;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidUserStatusTransitionException;
+import com.galeritos.risk_guard.identity.domain.exception.PinAlreadyDefinedException;
+import com.galeritos.risk_guard.identity.domain.exception.PinNotConfiguredException;
 import com.galeritos.risk_guard.identity.domain.exception.UnauthenticatedAccessException;
 import com.galeritos.risk_guard.identity.domain.exception.UserCredentialDisabledException;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotActiveException;
@@ -140,6 +143,27 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleBadRequest(RuntimeException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPinException.class)
+    public ResponseEntity<?> handleInvalidPin(InvalidPinException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(PinAlreadyDefinedException.class)
+    public ResponseEntity<?> handlePinAlreadyDefined(PinAlreadyDefinedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(PinNotConfiguredException.class)
+    public ResponseEntity<?> handlePinNotConfigured(PinNotConfiguredException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse(ex.getMessage()));
     }
 }

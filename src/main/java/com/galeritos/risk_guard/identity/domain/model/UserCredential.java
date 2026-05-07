@@ -31,13 +31,21 @@ public class UserCredential {
     @Column(nullable = false)
     private boolean enabled;
 
+    @Column(name = "pin_hash")
+    private String pinHash;
+
     protected UserCredential() {
     }
 
-    public UserCredential(UUID id, User user, String passwordHash, boolean enabled) {
+    public UserCredential(UUID id, User user, String passwordHash, boolean enabled, String pinHash) {
         this.id = id;
         this.user = user;
         this.passwordHash = passwordHash;
         this.enabled = enabled;
+        this.pinHash = pinHash;
+    }
+
+    public void setPinHash(String pinHash) {
+        this.pinHash = pinHash;
     }
 }

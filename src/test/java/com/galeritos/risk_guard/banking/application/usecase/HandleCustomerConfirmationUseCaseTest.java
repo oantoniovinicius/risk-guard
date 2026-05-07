@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +30,11 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
+import com.galeritos.risk_guard.identity.application.service.PinService;
+import com.galeritos.risk_guard.identity.domain.exception.InvalidPinException;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 
 @ExtendWith(MockitoExtension.class)
 class HandleCustomerConfirmationUseCaseTest {
@@ -44,12 +51,30 @@ class HandleCustomerConfirmationUseCaseTest {
     @Mock
     private BankingEventPublisher eventPublisher;
 
+    @Mock
+    private PinService pinService;
+
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+
     @InjectMocks
     private HandleCustomerConfirmationUseCase useCase;
+
+    private static final String VALID_PIN = "4592";
+
+    private AuthenticatedUser stubAuthenticatedUser() {
+        UUID userId = UUID.randomUUID();
+        AuthenticatedUser user = new AuthenticatedUser(userId, "user@test.com", Role.USER,
+                java.util.List.of(() -> "ROLE_USER"));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(user);
+        doNothing().when(pinService).validate(userId, VALID_PIN);
+        return user;
+    }
 
     @Test
     void shouldApproveAndFinalizeWhenCustomerConfirms() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -64,7 +89,7 @@ class HandleCustomerConfirmationUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE);
+        useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, VALID_PIN);
 
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
@@ -77,6 +102,7 @@ class HandleCustomerConfirmationUseCaseTest {
     @Test
     void shouldConfirmFraudWhenCustomerReportsFraud() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -91,7 +117,7 @@ class HandleCustomerConfirmationUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, CustomerConfirmationDecision.REPORT_FRAUD);
+        useCase.execute(transactionId, CustomerConfirmationDecision.REPORT_FRAUD, VALID_PIN);
 
         assertEquals(TransactionStatus.FRAUD_CONFIRMED, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
@@ -104,6 +130,8 @@ class HandleCustomerConfirmationUseCaseTest {
     @Test
     void shouldBeIdempotentWhenAlreadyApprovedAndDecisionIsApprove() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
+
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -116,7 +144,7 @@ class HandleCustomerConfirmationUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE);
+        useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, VALID_PIN);
 
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         verify(transactionRepository, never()).save(transaction);
@@ -128,6 +156,8 @@ class HandleCustomerConfirmationUseCaseTest {
     @Test
     void shouldBeIdempotentWhenAlreadyFraudConfirmedAndDecisionIsReportFraud() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
+
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -140,7 +170,7 @@ class HandleCustomerConfirmationUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, CustomerConfirmationDecision.REPORT_FRAUD);
+        useCase.execute(transactionId, CustomerConfirmationDecision.REPORT_FRAUD, VALID_PIN);
 
         assertEquals(TransactionStatus.FRAUD_CONFIRMED, transaction.getStatus());
         verify(transactionRepository, never()).save(transaction);
@@ -152,13 +182,14 @@ class HandleCustomerConfirmationUseCaseTest {
     @Test
     void shouldThrowWhenTransactionNotFound() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.empty());
 
         assertThrows(TransactionNotFoundException.class,
-                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE));
+                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, VALID_PIN));
 
-        verify(transactionRepository, never()).save(org.mockito.ArgumentMatchers.any(Transaction.class));
+        verify(transactionRepository, never()).save(any(Transaction.class));
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
         verify(eventPublisher, never()).publishTransactionStatusChanged(any());
@@ -167,6 +198,7 @@ class HandleCustomerConfirmationUseCaseTest {
     @Test
     void shouldThrowWhenTransactionIsNotAwaitingCustomerAndDecisionIsNotIdempotent() {
         UUID transactionId = UUID.randomUUID();
+        stubAuthenticatedUser();
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -181,11 +213,41 @@ class HandleCustomerConfirmationUseCaseTest {
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
         assertThrows(InvalidCustomerConfirmationStateException.class,
-                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE));
+                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, VALID_PIN));
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldThrowWhenPinIsInvalid() {
+        UUID transactionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        AuthenticatedUser user = new AuthenticatedUser(userId, "user@test.com", Role.USER,
+                java.util.List.of(() -> "ROLE_USER"));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(user);
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("300.00"),
+                TransactionStatus.AWAITING_CUSTOMER,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+        ReflectionTestUtils.setField(transaction, "customerDecisionDeadlineAt", LocalDateTime.now().plusMinutes(2));
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        doThrow(new InvalidPinException()).when(pinService).validate(userId, "wrong");
+
+        assertThrows(InvalidPinException.class,
+                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, "wrong"));
+
+        verify(transactionRepository, never()).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
         verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 }

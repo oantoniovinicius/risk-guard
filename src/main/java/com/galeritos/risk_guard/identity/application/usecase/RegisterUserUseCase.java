@@ -54,7 +54,8 @@ public class RegisterUserUseCase {
                 null,
                 user,
                 passwordEncoder.encode(command.password()),
-                true);
+                true,
+                null);
         userCredentialRepository.save(credential);
 
         return user;

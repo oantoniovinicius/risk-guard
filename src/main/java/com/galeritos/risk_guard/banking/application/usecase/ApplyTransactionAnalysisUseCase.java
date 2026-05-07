@@ -50,7 +50,8 @@ public class ApplyTransactionAnalysisUseCase {
         transaction.assignRiskLevel(event.riskLevel());
         applyDecision(transaction, event.riskLevel());
         transactionRepository.save(transaction);
-        publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapStatusToEventType(transaction.getStatus())));
+        publishStatusChanged(
+                TransactionStatusChangedEvent.from(transaction, mapStatusToEventType(transaction.getStatus())));
 
         if (transaction.getStatus() == TransactionStatus.APPROVED) {
             finalizeTransactionFinancialUseCase.execute(transaction.getId());
@@ -60,8 +61,8 @@ public class ApplyTransactionAnalysisUseCase {
     private void applyDecision(Transaction transaction, RiskLevel riskLevel) {
         switch (riskLevel) {
             case LOW -> transaction.approve();
-            case MEDIUM -> transaction.awaitAnalyst();
-            case HIGH -> transaction.awaitCustomer(LocalDateTime.now().plusMinutes(10));
+            case MEDIUM -> transaction.awaitCustomer(LocalDateTime.now().plusMinutes(10));
+            case HIGH -> transaction.awaitAnalyst();
         }
     }
 
