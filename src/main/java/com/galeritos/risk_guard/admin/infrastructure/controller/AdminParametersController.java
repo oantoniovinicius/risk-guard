@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.galeritos.risk_guard.admin.application.usecase.GetAdminSettingsUseCase;
 import com.galeritos.risk_guard.admin.application.usecase.UpdateAdminSettingsUseCase;
-import com.galeritos.risk_guard.admin.domain.model.AdminSettings;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminSettingsResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.UpdateAdminSettingsRequest;
+import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminSettingsMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/admin/parameters")
 public class AdminParametersController {
+
     private final GetAdminSettingsUseCase getAdminSettingsUseCase;
     private final UpdateAdminSettingsUseCase updateAdminSettingsUseCase;
 
@@ -40,7 +41,7 @@ public class AdminParametersController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminSettingsResponse> getSettings() {
-        return ResponseEntity.ok(toResponse(getAdminSettingsUseCase.execute()));
+        return ResponseEntity.ok(AdminSettingsMapper.toResponse(getAdminSettingsUseCase.execute()));
     }
 
     @Operation(summary = "Patch admin risk parameters and business hours")
@@ -52,20 +53,10 @@ public class AdminParametersController {
     @PatchMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminSettingsResponse> patchSettings(@Valid @RequestBody UpdateAdminSettingsRequest request) {
-        AdminSettings updated = updateAdminSettingsUseCase.execute(
+        return ResponseEntity.ok(AdminSettingsMapper.toResponse(updateAdminSettingsUseCase.execute(
                 request.mediumRiskThreshold(),
                 request.highRiskThreshold(),
                 request.businessStartTime(),
-                request.businessEndTime());
-        return ResponseEntity.ok(toResponse(updated));
-    }
-
-    private AdminSettingsResponse toResponse(AdminSettings settings) {
-        return new AdminSettingsResponse(
-                settings.getMediumRiskThreshold(),
-                settings.getHighRiskThreshold(),
-                settings.getBusinessStartTime(),
-                settings.getBusinessEndTime(),
-                settings.getUpdatedAt());
+                request.businessEndTime())));
     }
 }

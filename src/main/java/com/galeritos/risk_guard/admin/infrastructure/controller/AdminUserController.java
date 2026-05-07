@@ -6,29 +6,32 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.galeritos.risk_guard.admin.application.usecase.ChangeUserRoleUseCase;
 import com.galeritos.risk_guard.admin.application.usecase.GetAdminDecisionHistoryUseCase;
+import com.galeritos.risk_guard.admin.application.usecase.GetUserTransactionsUseCase;
+import com.galeritos.risk_guard.admin.application.usecase.ListUsersUseCase;
 import com.galeritos.risk_guard.admin.domain.model.AdminDecisionHistory;
-import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminDecisionHistoryItemResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminDecisionHistoryResponse;
-import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserDetailResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminRoleUpdateRequest;
+import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminTransactionPageResponse;
+import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserDetailResponse;
+import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserPageResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserRoleResponse;
-import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserSummaryResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserStatusResponse;
+import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserSummaryResponse;
+import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminDecisionHistoryMapper;
+import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminTransactionMapper;
+import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminUserMapper;
+import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.identity.application.usecase.ApproveUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.BlockUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.DenyUserUseCase;
@@ -38,11 +41,18 @@ import com.galeritos.risk_guard.identity.application.usecase.SuspendUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnblockUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnsuspendUserUseCase;
 import com.galeritos.risk_guard.identity.domain.model.User;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
+import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/admin/users")
 public class AdminUserController {
+
     private final ApproveUserUseCase approveUserUseCase;
     private final DenyUserUseCase denyUserUseCase;
     private final SuspendUserUseCase suspendUserUseCase;
@@ -53,6 +63,8 @@ public class AdminUserController {
     private final GetAdminDecisionHistoryUseCase getAdminDecisionHistoryUseCase;
     private final ListPendingUsersUseCase listPendingUsersUseCase;
     private final GetUserDetailUseCase getUserDetailUseCase;
+    private final ListUsersUseCase listUsersUseCase;
+    private final GetUserTransactionsUseCase getUserTransactionsUseCase;
 
     public AdminUserController(
             ApproveUserUseCase approveUserUseCase,
@@ -64,7 +76,9 @@ public class AdminUserController {
             ChangeUserRoleUseCase changeUserRoleUseCase,
             GetAdminDecisionHistoryUseCase getAdminDecisionHistoryUseCase,
             ListPendingUsersUseCase listPendingUsersUseCase,
-            GetUserDetailUseCase getUserDetailUseCase) {
+            GetUserDetailUseCase getUserDetailUseCase,
+            ListUsersUseCase listUsersUseCase,
+            GetUserTransactionsUseCase getUserTransactionsUseCase) {
         this.approveUserUseCase = approveUserUseCase;
         this.denyUserUseCase = denyUserUseCase;
         this.suspendUserUseCase = suspendUserUseCase;
@@ -75,6 +89,8 @@ public class AdminUserController {
         this.getAdminDecisionHistoryUseCase = getAdminDecisionHistoryUseCase;
         this.listPendingUsersUseCase = listPendingUsersUseCase;
         this.getUserDetailUseCase = getUserDetailUseCase;
+        this.listUsersUseCase = listUsersUseCase;
+        this.getUserTransactionsUseCase = getUserTransactionsUseCase;
     }
 
     @Operation(summary = "List pending users")
@@ -85,16 +101,30 @@ public class AdminUserController {
     @GetMapping("/pending")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AdminUserSummaryResponse>> listPendingUsers() {
-        List<AdminUserSummaryResponse> response = listPendingUsersUseCase.execute().stream()
-                .map(user -> new AdminUserSummaryResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getDocument(),
-                        user.getStatus(),
-                        user.getCreatedAt()))
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(listPendingUsersUseCase.execute().stream()
+                .map(AdminUserMapper::toSummary)
+                .toList());
+    }
+
+    @Operation(summary = "List all users with optional filters")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User list returned"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserPageResponse> listUsers(
+            @RequestParam(required = false) UserStatus status,
+            @RequestParam(required = false) Role role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<User> result = listUsersUseCase.execute(status, role, page, size);
+        return ResponseEntity.ok(new AdminUserPageResponse(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.getContent().stream().map(AdminUserMapper::toSummary).toList()));
     }
 
     @Operation(summary = "Get user detail by id")
@@ -106,16 +136,7 @@ public class AdminUserController {
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserDetailResponse> getUserDetail(@PathVariable UUID userId) {
-        User user = getUserDetailUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserDetailResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getDocument(),
-                user.getRole(),
-                user.getStatus(),
-                user.isSuspect(),
-                user.getCreatedAt()));
+        return ResponseEntity.ok(AdminUserMapper.toDetail(getUserDetailUseCase.execute(userId)));
     }
 
     @Operation(summary = "Approve pending user")
@@ -128,8 +149,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> approveUser(@PathVariable UUID userId) {
-        User user = approveUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(approveUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Deny onboarding for pending user")
@@ -142,8 +162,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/deny")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> denyUser(@PathVariable UUID userId) {
-        User user = denyUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(denyUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Suspend active user")
@@ -156,8 +175,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/suspend")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> suspendUser(@PathVariable UUID userId) {
-        User user = suspendUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(suspendUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Block active user")
@@ -170,8 +188,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/block")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> blockUser(@PathVariable UUID userId) {
-        User user = blockUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(blockUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Unsuspend suspended user")
@@ -184,8 +201,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/unsuspend")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> unsuspendUser(@PathVariable UUID userId) {
-        User user = unsuspendUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(unsuspendUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Unblock blocked user")
@@ -198,8 +214,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/unblock")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserStatusResponse> unblockUser(@PathVariable UUID userId) {
-        User user = unblockUserUseCase.execute(userId);
-        return ResponseEntity.ok(new AdminUserStatusResponse(user.getId(), user.getStatus()));
+        return ResponseEntity.ok(AdminUserMapper.toStatus(unblockUserUseCase.execute(userId)));
     }
 
     @Operation(summary = "Update user role")
@@ -214,8 +229,7 @@ public class AdminUserController {
     public ResponseEntity<AdminUserRoleResponse> updateRole(
             @PathVariable UUID userId,
             @Valid @RequestBody AdminRoleUpdateRequest request) {
-        User user = changeUserRoleUseCase.execute(userId, request.role());
-        return ResponseEntity.ok(new AdminUserRoleResponse(user.getId(), user.getRole()));
+        return ResponseEntity.ok(AdminUserMapper.toRole(changeUserRoleUseCase.execute(userId, request.role())));
     }
 
     @Operation(summary = "Get decision history for a user")
@@ -229,13 +243,8 @@ public class AdminUserController {
             @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<AdminDecisionHistory> historyPage = getAdminDecisionHistoryUseCase.execute(userId, page, size);
-        return ResponseEntity.ok(new AdminDecisionHistoryResponse(
-                historyPage.getNumber(),
-                historyPage.getSize(),
-                historyPage.getTotalElements(),
-                historyPage.getTotalPages(),
-                historyPage.getContent().stream().map(this::toHistoryItem).toList()));
+        return ResponseEntity.ok(
+                AdminDecisionHistoryMapper.toPageResponse(getAdminDecisionHistoryUseCase.execute(userId, page, size)));
     }
 
     @Operation(summary = "Get global admin decision history")
@@ -248,27 +257,28 @@ public class AdminUserController {
     public ResponseEntity<AdminDecisionHistoryResponse> getGlobalDecisionHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<AdminDecisionHistory> historyPage = getAdminDecisionHistoryUseCase.execute(null, page, size);
-        return ResponseEntity.ok(new AdminDecisionHistoryResponse(
-                historyPage.getNumber(),
-                historyPage.getSize(),
-                historyPage.getTotalElements(),
-                historyPage.getTotalPages(),
-                historyPage.getContent().stream().map(this::toHistoryItem).toList()));
+        return ResponseEntity.ok(
+                AdminDecisionHistoryMapper.toPageResponse(getAdminDecisionHistoryUseCase.execute(null, page, size)));
     }
 
-    private AdminDecisionHistoryItemResponse toHistoryItem(AdminDecisionHistory item) {
-        return new AdminDecisionHistoryItemResponse(
-                item.getId(),
-                item.getActorUserId(),
-                item.getActorRole(),
-                item.getTargetUserId(),
-                item.getAction(),
-                item.getFromStatus(),
-                item.getToStatus(),
-                item.getFromRole(),
-                item.getToRole(),
-                item.getReason(),
-                item.getCreatedAt());
+    @Operation(summary = "Get paginated transaction history for a user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transaction history returned"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    @GetMapping("/{userId}/transactions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminTransactionPageResponse> getUserTransactions(
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<Transaction> result = getUserTransactionsUseCase.execute(userId, page, size);
+        return ResponseEntity.ok(new AdminTransactionPageResponse(
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.getContent().stream().map(AdminTransactionMapper::toResponse).toList()));
     }
 }
