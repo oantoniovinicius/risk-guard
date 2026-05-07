@@ -1,1 +1,4 @@
 com/galeritos/risk_guard/banking/application/usecase/ApplyTransactionAnalysisUseCase$1.class
+com/galeritos/risk_guard/banking/application/usecase/HandleAnalystDecisionUseCase$2.class
+com/galeritos/risk_guard/banking/application/usecase/ApplyTransactionAnalysisUseCase$2.class
+com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationUseCase$2.class

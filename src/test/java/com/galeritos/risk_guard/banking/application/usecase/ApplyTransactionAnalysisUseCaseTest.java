@@ -78,8 +78,9 @@ class ApplyTransactionAnalysisUseCaseTest {
     }
 
     @Test
-    void shouldRouteToAnalystWhenRiskIsMedium() {
+    void shouldRouteToCustomerWhenRiskIsMedium() {
         UUID transactionId = UUID.randomUUID();
+        LocalDateTime before = LocalDateTime.now();
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -101,18 +102,21 @@ class ApplyTransactionAnalysisUseCaseTest {
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
 
         useCase.execute(event);
+        LocalDateTime after = LocalDateTime.now();
 
-        assertEquals(TransactionStatus.AWAITING_ANALYST, transaction.getStatus());
+        assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
         assertEquals(RiskLevel.MEDIUM, transaction.getRiskLevel());
+        assertNotNull(transaction.getCustomerDecisionDeadlineAt());
+        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isBefore(before.plusMinutes(10)));
+        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isAfter(after.plusMinutes(10)));
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
         verify(eventPublisher).publishTransactionStatusChanged(any());
     }
 
     @Test
-    void shouldRouteToCustomerWhenRiskIsHigh() {
+    void shouldRouteToAnalystWhenRiskIsHigh() {
         UUID transactionId = UUID.randomUUID();
-        LocalDateTime before = LocalDateTime.now();
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -134,13 +138,9 @@ class ApplyTransactionAnalysisUseCaseTest {
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
 
         useCase.execute(event);
-        LocalDateTime after = LocalDateTime.now();
 
-        assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
+        assertEquals(TransactionStatus.AWAITING_ANALYST, transaction.getStatus());
         assertEquals(RiskLevel.HIGH, transaction.getRiskLevel());
-        assertNotNull(transaction.getCustomerDecisionDeadlineAt());
-        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isBefore(before.plusMinutes(10)));
-        assertTrue(!transaction.getCustomerDecisionDeadlineAt().isAfter(after.plusMinutes(10)));
         verify(transactionRepository).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(any(UUID.class));
         verify(eventPublisher).publishTransactionStatusChanged(any());

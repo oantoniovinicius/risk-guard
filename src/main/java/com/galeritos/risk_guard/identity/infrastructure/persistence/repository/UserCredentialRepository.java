@@ -14,6 +14,8 @@ public interface UserCredentialRepository extends JpaRepository<UserCredential, 
 
     Optional<UserCredential> findByUser(User user);
 
+    Optional<UserCredential> findByUserId(UUID userId);
+
     @Query("""
             SELECT uc FROM UserCredential uc
             JOIN uc.user u

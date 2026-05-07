@@ -76,4 +76,43 @@ public class User {
         }
         this.status = UserStatus.ACTIVE;
     }
+
+    public void reject() {
+        if (status != UserStatus.PENDING) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.REJECTED);
+        }
+        this.status = UserStatus.REJECTED;
+    }
+
+    public void suspend() {
+        if (status != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.SUSPENDED);
+        }
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void unsuspend() {
+        if (status != UserStatus.SUSPENDED) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.ACTIVE);
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void block() {
+        if (status != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.BLOCKED);
+        }
+        this.status = UserStatus.BLOCKED;
+    }
+
+    public void unblock() {
+        if (status != UserStatus.BLOCKED) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.ACTIVE);
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = newRole;
+    }
 }

@@ -45,7 +45,7 @@ class LoginUseCaseTest {
     void shouldLoginAndGenerateToken() {
         LoginCommand command = new LoginCommand("user@example.com", "StrongPass123");
         User user = new User(null, "User", "user@example.com", "12345678901", Role.USER, UserStatus.PENDING);
-        UserCredential credential = new UserCredential(null, user, "hash", true);
+        UserCredential credential = new UserCredential(null, user, "hash", true, null);
 
         when(userCredentialRepository.findByUserEmail(command.email())).thenReturn(Optional.of(credential));
         when(passwordEncoder.matches(command.password(), credential.getPasswordHash())).thenReturn(true);
@@ -60,7 +60,7 @@ class LoginUseCaseTest {
     void shouldFailWithInvalidCredentials() {
         LoginCommand command = new LoginCommand("user@example.com", "WrongPass");
         User user = new User(null, "User", "user@example.com", "12345678901", Role.USER, UserStatus.PENDING);
-        UserCredential credential = new UserCredential(null, user, "hash", true);
+        UserCredential credential = new UserCredential(null, user, "hash", true, null);
 
         when(userCredentialRepository.findByUserEmail(command.email())).thenReturn(Optional.of(credential));
         when(passwordEncoder.matches(command.password(), credential.getPasswordHash())).thenReturn(false);

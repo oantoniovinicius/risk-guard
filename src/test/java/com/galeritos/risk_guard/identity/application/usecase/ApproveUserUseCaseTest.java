@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.galeritos.risk_guard.admin.application.usecase.RecordAdminDecisionUseCase;
 import com.galeritos.risk_guard.identity.application.port.out.IdentityEventPublisher;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
 import com.galeritos.risk_guard.identity.domain.model.User;
@@ -29,11 +30,14 @@ class ApproveUserUseCaseTest {
     @Mock
     private IdentityEventPublisher identityEventPublisher;
 
+    @Mock
+    private RecordAdminDecisionUseCase recordAdminDecisionUseCase;
+
     private ApproveUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new ApproveUserUseCase(userRepository, identityEventPublisher);
+        useCase = new ApproveUserUseCase(userRepository, identityEventPublisher, recordAdminDecisionUseCase);
     }
 
     @Test

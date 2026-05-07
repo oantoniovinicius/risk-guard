@@ -14,6 +14,9 @@ import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.CustomerConfirmationDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
+import com.galeritos.risk_guard.identity.application.service.PinService;
 import com.galeritos.risk_guard.shared.events.EventTypes;
 
 import jakarta.transaction.Transactional;
@@ -24,22 +27,31 @@ public class HandleCustomerConfirmationUseCase {
     private final FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
     private final HandleFraudConfirmedUseCase handleFraudConfirmedUseCase;
     private final BankingEventPublisher eventPublisher;
+    private final PinService pinService;
+    private final CurrentUserProvider currentUserProvider;
 
     public HandleCustomerConfirmationUseCase(
             TransactionRepository transactionRepository,
             FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase,
             HandleFraudConfirmedUseCase handleFraudConfirmedUseCase,
-            BankingEventPublisher eventPublisher) {
+            BankingEventPublisher eventPublisher,
+            PinService pinService,
+            CurrentUserProvider currentUserProvider) {
         this.transactionRepository = transactionRepository;
         this.finalizeTransactionFinancialUseCase = finalizeTransactionFinancialUseCase;
         this.handleFraudConfirmedUseCase = handleFraudConfirmedUseCase;
         this.eventPublisher = eventPublisher;
+        this.pinService = pinService;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Transactional
-    public void execute(UUID transactionId, CustomerConfirmationDecision decision) {
+    public void execute(UUID transactionId, CustomerConfirmationDecision decision, String pin) {
         Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        AuthenticatedUser user = currentUserProvider.getAuthenticatedUser();
+        pinService.validate(user.userId(), pin);
 
         if (transaction.getStatus() == TransactionStatus.AWAITING_CUSTOMER) {
             applyFromAwaitingCustomer(transaction, decision);
