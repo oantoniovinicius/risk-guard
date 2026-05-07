@@ -33,7 +33,7 @@ public class AdminParametersController {
         this.updateAdminSettingsUseCase = updateAdminSettingsUseCase;
     }
 
-    @Operation(summary = "Get admin risk parameters and business hours")
+    @Operation(summary = "Get admin risk parameters")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Admin settings returned"),
             @ApiResponse(responseCode = "403", description = "Forbidden")
@@ -44,7 +44,7 @@ public class AdminParametersController {
         return ResponseEntity.ok(AdminSettingsMapper.toResponse(getAdminSettingsUseCase.execute()));
     }
 
-    @Operation(summary = "Patch admin risk parameters and business hours")
+    @Operation(summary = "Patch admin risk parameters")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Admin settings updated"),
             @ApiResponse(responseCode = "400", description = "Invalid settings"),
@@ -55,8 +55,6 @@ public class AdminParametersController {
     public ResponseEntity<AdminSettingsResponse> patchSettings(@Valid @RequestBody UpdateAdminSettingsRequest request) {
         return ResponseEntity.ok(AdminSettingsMapper.toResponse(updateAdminSettingsUseCase.execute(
                 request.mediumRiskThreshold(),
-                request.highRiskThreshold(),
-                request.businessStartTime(),
-                request.businessEndTime())));
+                request.highRiskThreshold())));
     }
 }

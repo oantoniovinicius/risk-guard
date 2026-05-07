@@ -2,7 +2,14 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/TestRiskGuardApplication.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/TestcontainersConfiguration.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/ChangeUserRoleUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/GetAdminStatsUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/GetTransactionDetailUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/GetUserTransactionsUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/ListTransactionsUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/ListUsersUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/admin/application/usecase/UpdateAdminSettingsUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/analyst/application/usecase/GetAnalystTransactionDetailUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/analyst/application/usecase/ListAnalystQueueUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/ApplyTransactionAnalysisUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/CreateAccountForApprovedUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/CreateTransferUseCaseTest.java
@@ -12,8 +19,10 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/application/usecase/HandleFraudConfirmedUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/banking/infrastructure/controller/TransferControllerIntegrationTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/service/PinServiceTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/ApproveUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/BlockUserUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/CreatePinUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/DenyUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/LoginUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/RegisterUserUseCaseTest.java

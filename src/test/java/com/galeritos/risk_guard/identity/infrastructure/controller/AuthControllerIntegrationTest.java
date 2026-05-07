@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.galeritos.risk_guard.TestcontainersConfiguration;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 import com.galeritos.risk_guard.identity.application.security.JwtService;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.UserCredential;
@@ -30,6 +32,7 @@ import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.PasswordResetTokenRepository;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserCredentialRepository;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
+import com.galeritos.risk_guard.risk.infrastructure.persistence.repository.RiskAnalysisRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -56,8 +59,20 @@ class AuthControllerIntegrationTest {
         @Autowired
         private JwtService jwtService;
 
+        @Autowired
+        private RiskAnalysisRepository riskAnalysisRepository;
+
+        @Autowired
+        private TransactionRepository transactionRepository;
+
+        @Autowired
+        private AccountRepository accountRepository;
+
         @BeforeEach
         void setUp() {
+                riskAnalysisRepository.deleteAll();
+                transactionRepository.deleteAll();
+                accountRepository.deleteAll();
                 passwordResetTokenRepository.deleteAll();
                 userCredentialRepository.deleteAll();
                 userRepository.deleteAll();
@@ -498,15 +513,11 @@ class AuthControllerIntegrationTest {
                                 .content("""
                                                 {
                                                   "mediumRiskThreshold": 0.65,
-                                                  "highRiskThreshold": 0.93,
-                                                  "businessStartTime": "09:00",
-                                                  "businessEndTime": "20:00"
+                                                  "highRiskThreshold": 0.93
                                                 }
                                                 """))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.mediumRiskThreshold").value(0.65))
-                                .andExpect(jsonPath("$.highRiskThreshold").value(0.93))
-                                .andExpect(jsonPath("$.businessStartTime").value("09:00:00"))
-                                .andExpect(jsonPath("$.businessEndTime").value("20:00:00"));
+                                .andExpect(jsonPath("$.highRiskThreshold").value(0.93));
         }
 }

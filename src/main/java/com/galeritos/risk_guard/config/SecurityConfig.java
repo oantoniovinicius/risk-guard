@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/transfers/*/status").authenticated()
                         .requestMatchers(HttpMethod.POST, "/transfers/*/customer-confirmation").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/transfers/*/analyst-decision").hasRole("ANALYST")
+                        .requestMatchers("/analyst/**").hasRole("ANALYST")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling

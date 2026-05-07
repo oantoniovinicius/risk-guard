@@ -12,8 +12,6 @@ public final class AdminSettingsMapper {
         return new AdminSettingsResponse(
                 settings.getMediumRiskThreshold(),
                 settings.getHighRiskThreshold(),
-                settings.getBusinessStartTime(),
-                settings.getBusinessEndTime(),
                 settings.getUpdatedAt());
     }
 }

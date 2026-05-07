@@ -12,9 +12,12 @@ import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublish
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
+import com.galeritos.risk_guard.banking.domain.model.TransactionDecisionHistory;
 import com.galeritos.risk_guard.banking.domain.model.enums.AnalystDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionDecisionHistoryRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
 import com.galeritos.risk_guard.shared.events.EventTypes;
 
 import jakarta.transaction.Transactional;
@@ -22,19 +25,25 @@ import jakarta.transaction.Transactional;
 @Service
 public class HandleAnalystDecisionUseCase {
     private final TransactionRepository transactionRepository;
+    private final TransactionDecisionHistoryRepository decisionHistoryRepository;
     private final FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
     private final HandleFraudConfirmedUseCase handleFraudConfirmedUseCase;
     private final BankingEventPublisher eventPublisher;
+    private final CurrentUserProvider currentUserProvider;
 
     public HandleAnalystDecisionUseCase(
             TransactionRepository transactionRepository,
+            TransactionDecisionHistoryRepository decisionHistoryRepository,
             FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase,
             HandleFraudConfirmedUseCase handleFraudConfirmedUseCase,
-            BankingEventPublisher eventPublisher) {
+            BankingEventPublisher eventPublisher,
+            CurrentUserProvider currentUserProvider) {
         this.transactionRepository = transactionRepository;
+        this.decisionHistoryRepository = decisionHistoryRepository;
         this.finalizeTransactionFinancialUseCase = finalizeTransactionFinancialUseCase;
         this.handleFraudConfirmedUseCase = handleFraudConfirmedUseCase;
         this.eventPublisher = eventPublisher;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Transactional
@@ -43,8 +52,16 @@ public class HandleAnalystDecisionUseCase {
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
         if (transaction.getStatus() == TransactionStatus.AWAITING_ANALYST) {
+            TransactionStatus fromStatus = transaction.getStatus();
             applyFromAwaitingAnalyst(transaction, decision);
+            TransactionStatus toStatus = transaction.getStatus();
+
             transactionRepository.save(transaction);
+
+            UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
+            decisionHistoryRepository.save(
+                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus));
+
             publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
             triggerPostTransitionSideEffects(transactionId, decision);
             return;

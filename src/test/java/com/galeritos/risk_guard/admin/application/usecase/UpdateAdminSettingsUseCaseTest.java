@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,22 +33,14 @@ class UpdateAdminSettingsUseCaseTest {
         AdminSettings existing = new AdminSettings(
                 UUID.randomUUID(),
                 new BigDecimal("0.60"),
-                new BigDecimal("0.90"),
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0));
+                new BigDecimal("0.90"));
 
         when(getAdminSettingsUseCase.execute()).thenReturn(existing);
 
-        AdminSettings updated = useCase.execute(
-                new BigDecimal("0.55"),
-                null,
-                null,
-                LocalTime.of(19, 0));
+        AdminSettings updated = useCase.execute(new BigDecimal("0.55"), null);
 
         assertEquals(0, new BigDecimal("0.55").compareTo(updated.getMediumRiskThreshold()));
         assertEquals(0, new BigDecimal("0.90").compareTo(updated.getHighRiskThreshold()));
-        assertEquals(LocalTime.of(8, 0), updated.getBusinessStartTime());
-        assertEquals(LocalTime.of(19, 0), updated.getBusinessEndTime());
     }
 
     @Test
@@ -57,13 +48,11 @@ class UpdateAdminSettingsUseCaseTest {
         AdminSettings existing = new AdminSettings(
                 UUID.randomUUID(),
                 new BigDecimal("0.60"),
-                new BigDecimal("0.90"),
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0));
+                new BigDecimal("0.90"));
 
         when(getAdminSettingsUseCase.execute()).thenReturn(existing);
 
         assertThrows(InvalidAdminSettingsException.class,
-                () -> useCase.execute(new BigDecimal("0.70"), new BigDecimal("0.65"), null, null));
+                () -> useCase.execute(new BigDecimal("0.70"), new BigDecimal("0.65")));
     }
 }

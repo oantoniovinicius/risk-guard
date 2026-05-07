@@ -1,0 +1,15 @@
+package com.galeritos.risk_guard.analyst.infrastructure.controller.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public record AnalystTransactionSummaryResponse(
+        UUID transactionId,
+        UUID senderId,
+        UUID receiverId,
+        BigDecimal amount,
+        String riskLevel,
+        LocalDateTime createdAt,
+        LocalDateTime customerDecisionDeadlineAt) {
+}
