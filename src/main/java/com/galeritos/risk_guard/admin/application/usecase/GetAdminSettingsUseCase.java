@@ -27,8 +27,6 @@ public class GetAdminSettingsUseCase {
                 .orElseGet(() -> repository.save(new AdminSettings(
                         SETTINGS_ID,
                         defaults.mediumRiskThreshold(),
-                        defaults.highRiskThreshold(),
-                        defaults.businessStartTime(),
-                        defaults.businessEndTime())));
+                        defaults.highRiskThreshold())));
     }
 }

@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,8 +66,8 @@ class HandleCustomerConfirmationUseCaseTest {
         UUID userId = UUID.randomUUID();
         AuthenticatedUser user = new AuthenticatedUser(userId, "user@test.com", Role.USER,
                 java.util.List.of(() -> "ROLE_USER"));
-        when(currentUserProvider.getAuthenticatedUser()).thenReturn(user);
-        doNothing().when(pinService).validate(userId, VALID_PIN);
+        lenient().when(currentUserProvider.getAuthenticatedUser()).thenReturn(user);
+        lenient().doNothing().when(pinService).validate(userId, VALID_PIN);
         return user;
     }
 

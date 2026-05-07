@@ -2,7 +2,6 @@ package com.galeritos.risk_guard.admin.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -24,41 +23,22 @@ public class AdminSettings {
     @Column(name = "high_risk_threshold", nullable = false, precision = 5, scale = 4)
     private BigDecimal highRiskThreshold;
 
-    @Column(name = "business_start_time", nullable = false)
-    private LocalTime businessStartTime;
-
-    @Column(name = "business_end_time", nullable = false)
-    private LocalTime businessEndTime;
-
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     protected AdminSettings() {
     }
 
-    public AdminSettings(
-            UUID id,
-            BigDecimal mediumRiskThreshold,
-            BigDecimal highRiskThreshold,
-            LocalTime businessStartTime,
-            LocalTime businessEndTime) {
+    public AdminSettings(UUID id, BigDecimal mediumRiskThreshold, BigDecimal highRiskThreshold) {
         this.id = id;
         this.mediumRiskThreshold = mediumRiskThreshold;
         this.highRiskThreshold = highRiskThreshold;
-        this.businessStartTime = businessStartTime;
-        this.businessEndTime = businessEndTime;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void update(
-            BigDecimal mediumRiskThreshold,
-            BigDecimal highRiskThreshold,
-            LocalTime businessStartTime,
-            LocalTime businessEndTime) {
+    public void update(BigDecimal mediumRiskThreshold, BigDecimal highRiskThreshold) {
         this.mediumRiskThreshold = mediumRiskThreshold;
         this.highRiskThreshold = highRiskThreshold;
-        this.businessStartTime = businessStartTime;
-        this.businessEndTime = businessEndTime;
         this.updatedAt = LocalDateTime.now();
     }
 }

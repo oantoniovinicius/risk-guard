@@ -6,32 +6,41 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
+import com.galeritos.risk_guard.banking.domain.model.TransactionDecisionHistory;
 import com.galeritos.risk_guard.banking.domain.model.enums.AnalystDecision;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionDecisionHistoryRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.shared.events.EventTypes;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +48,9 @@ class HandleAnalystDecisionUseCaseTest {
 
     @Mock
     private TransactionRepository transactionRepository;
+
+    @Mock
+    private TransactionDecisionHistoryRepository decisionHistoryRepository;
 
     @Mock
     private FinalizeTransactionFinancialUseCase finalizeTransactionFinancialUseCase;
@@ -49,8 +61,18 @@ class HandleAnalystDecisionUseCaseTest {
     @Mock
     private BankingEventPublisher eventPublisher;
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+
     @InjectMocks
     private HandleAnalystDecisionUseCase useCase;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(UUID.randomUUID(), "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+    }
 
     @Test
     void shouldApproveAndFinalizeWhenAnalystApproves() {
@@ -351,5 +373,56 @@ class HandleAnalystDecisionUseCaseTest {
         ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
         verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
         assertEquals(EventTypes.TRANSACTION_FRAUD_CONFIRMED, captor.getValue().eventType());
+    }
+
+    @Test
+    void shouldRecordDecisionHistoryWithCorrectStateTransitionWhenAnalystDecides() {
+        UUID transactionId = UUID.randomUUID();
+        UUID analystId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("400.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+
+        useCase.execute(transactionId, AnalystDecision.APPROVE);
+
+        ArgumentCaptor<TransactionDecisionHistory> captor = ArgumentCaptor.forClass(TransactionDecisionHistory.class);
+        verify(decisionHistoryRepository).save(captor.capture());
+        TransactionDecisionHistory saved = captor.getValue();
+        assertEquals(transactionId, saved.getTransactionId());
+        assertEquals(analystId, saved.getAnalystId());
+        assertEquals(AnalystDecision.APPROVE, saved.getDecision());
+        assertEquals(TransactionStatus.AWAITING_ANALYST, saved.getFromStatus());
+        assertEquals(TransactionStatus.APPROVED, saved.getToStatus());
+    }
+
+    @Test
+    void shouldNotRecordHistoryForIdempotentRetrigger() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                TransactionStatus.APPROVED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.APPROVE);
+
+        verify(decisionHistoryRepository, never()).save(any());
     }
 }

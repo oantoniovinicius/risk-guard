@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.AnonymousQueue;
@@ -30,6 +31,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,8 +45,10 @@ import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.Ac
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 import com.galeritos.risk_guard.identity.application.security.JwtService;
 import com.galeritos.risk_guard.identity.domain.model.User;
+import com.galeritos.risk_guard.identity.domain.model.UserCredential;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserCredentialRepository;
 import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 import com.galeritos.risk_guard.risk.infrastructure.persistence.repository.RiskAnalysisRepository;
 import com.galeritos.risk_guard.shared.events.EventTypes;
@@ -74,6 +78,12 @@ class TransferControllerIntegrationTest {
     private RiskAnalysisRepository riskAnalysisRepository;
 
     @Autowired
+    private UserCredentialRepository userCredentialRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private RabbitTemplate rabbitTemplate;
 
     @Autowired
@@ -85,13 +95,23 @@ class TransferControllerIntegrationTest {
     @Autowired
     private Queue transactionCreatedTestQueue;
 
-    @BeforeEach
-    void setUp() {
+    private void cleanDb() {
         riskAnalysisRepository.deleteAll();
         transactionRepository.deleteAll();
         accountRepository.deleteAll();
+        userCredentialRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @BeforeEach
+    void setUp() {
+        cleanDb();
         rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
+    }
+
+    @AfterEach
+    void tearDown() {
+        cleanDb();
     }
 
     @Test
@@ -229,7 +249,7 @@ class TransferControllerIntegrationTest {
     record TransferRequestPayload(UUID senderId, UUID receiverId, BigDecimal amount) {
     }
 
-    record CustomerDecisionPayload(String decision) {
+    record CustomerDecisionPayload(String decision, String pin) {
     }
 
     record AnalystDecisionPayload(String decision) {
@@ -237,8 +257,11 @@ class TransferControllerIntegrationTest {
 
     @Test
     void shouldApproveTransactionWhenCustomerConfirms() throws Exception {
+        String rawPin = "4592";
         User sender = userRepository
                 .save(new User(null, "Sender C1", "sender.c1@example.com", "12345000001", Role.USER, UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null, sender, passwordEncoder.encode("password"), true, passwordEncoder.encode(rawPin)));
         User receiver = userRepository
                 .save(new User(null, "Receiver C1", "receiver.c1@example.com", "22345000001", Role.USER, UserStatus.ACTIVE));
 
@@ -259,7 +282,7 @@ class TransferControllerIntegrationTest {
         mockMvc.perform(post("/transfers/{transactionId}/customer-confirmation", transaction.getId())
                 .header("Authorization", bearerToken(sender))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("APPROVE"))))
+                .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("APPROVE", rawPin))))
                 .andExpect(status().isNoContent());
 
         Transaction updated = transactionRepository.findById(transaction.getId()).orElseThrow();
@@ -279,8 +302,11 @@ class TransferControllerIntegrationTest {
 
     @Test
     void shouldConfirmFraudWhenCustomerReportsFraud() throws Exception {
+        String rawPin = "4592";
         User sender = userRepository
                 .save(new User(null, "Sender C2", "sender.c2@example.com", "12345000002", Role.USER, UserStatus.ACTIVE));
+        userCredentialRepository.save(new UserCredential(
+                null, sender, passwordEncoder.encode("password"), true, passwordEncoder.encode(rawPin)));
         User receiver = userRepository
                 .save(new User(null, "Receiver C2", "receiver.c2@example.com", "22345000002", Role.USER, UserStatus.ACTIVE));
 
@@ -301,7 +327,7 @@ class TransferControllerIntegrationTest {
         mockMvc.perform(post("/transfers/{transactionId}/customer-confirmation", transaction.getId())
                 .header("Authorization", bearerToken(sender))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("REPORT_FRAUD"))))
+                .content(objectMapper.writeValueAsString(new CustomerDecisionPayload("REPORT_FRAUD", rawPin))))
                 .andExpect(status().isNoContent());
 
         Transaction updated = transactionRepository.findById(transaction.getId()).orElseThrow();
