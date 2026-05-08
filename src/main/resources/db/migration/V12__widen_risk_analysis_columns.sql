@@ -1,0 +1,3 @@
+ALTER TABLE risk_analysis
+    ALTER COLUMN explanation TYPE VARCHAR(500),
+    ALTER COLUMN score TYPE NUMERIC(6,4);

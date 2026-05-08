@@ -31,5 +31,12 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/UnblockUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/UnsuspendUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/infrastructure/controller/AuthControllerIntegrationTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/AmountDeviationRuleTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/CompositeRiskScoringStrategyTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/NewReceiverRuleTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/OffHoursRuleTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/ReceiverProfileRuleTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/TransactionFrequencyRuleTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/UserHistoryRuleTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/usecase/AnalyzeTransactionUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/infrastructure/messaging/TransactionCreatedListenerIntegrationTest.java
