@@ -5,6 +5,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
@@ -12,6 +16,7 @@ import com.galeritos.risk_guard.identity.application.security.CurrentUserProvide
 import com.galeritos.risk_guard.identity.application.usecase.CreatePinUseCase;
 import com.galeritos.risk_guard.identity.infrastructure.controller.dto.CreatePinRequest;
 
+@Tag(name = "User", description = "Authenticated user operations")
 @RestController
 public class UserController {
     private final CreatePinUseCase createPinUseCase;
@@ -22,6 +27,12 @@ public class UserController {
         this.currentUserProvider = currentUserProvider;
     }
 
+    @Operation(summary = "Define PIN for the authenticated user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "PIN defined"),
+        @ApiResponse(responseCode = "400", description = "Weak PIN or PIN already defined"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/user/pin")
     public ResponseEntity<Void> createPin(@Valid @RequestBody CreatePinRequest request) {
         AuthenticatedUser user = currentUserProvider.getAuthenticatedUser();

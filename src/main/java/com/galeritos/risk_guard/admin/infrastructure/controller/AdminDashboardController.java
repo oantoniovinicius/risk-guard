@@ -13,7 +13,9 @@ import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminStat
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Admin - Stats", description = "Aggregate metrics for the admin dashboard")
 @RestController
 @RequestMapping("/admin/stats")
 public class AdminDashboardController {

@@ -23,8 +23,13 @@ import com.galeritos.risk_guard.banking.infrastructure.controller.dto.CreateTran
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.TransactionStatusResponse;
 import com.galeritos.risk_guard.identity.application.usecase.TransferAccessGuardUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name = "Transfers", description = "Transfer creation, status, and decision endpoints")
 @RestController
 @RequestMapping("/transfers")
 public class TransferController {
@@ -46,6 +51,12 @@ public class TransferController {
         this.transferAccessGuardUseCase = transferAccessGuardUseCase;
     }
 
+    @Operation(summary = "Create a transfer")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Transfer created"),
+        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "403", description = "User not allowed to transfer (not ACTIVE)")
+    })
     @PostMapping
     public ResponseEntity<CreateTransferResponse> createTransfer(@Valid @RequestBody CreateTransferRequest request) {
         transferAccessGuardUseCase.assertCanCreateTransfer(request.senderId());
@@ -68,6 +79,11 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get transaction status")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Status returned"),
+        @ApiResponse(responseCode = "404", description = "Transaction not found")
+    })
     @GetMapping("/{transactionId}/status")
     public ResponseEntity<TransactionStatusResponse> getTransactionStatus(@PathVariable UUID transactionId) {
         Transaction transaction = getTransactionStatusUseCase.execute(transactionId);
@@ -85,6 +101,14 @@ public class TransferController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Submit customer confirmation or fraud report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Decision recorded"),
+        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "403", description = "Wrong PIN or PIN blocked"),
+        @ApiResponse(responseCode = "404", description = "Transaction not found"),
+        @ApiResponse(responseCode = "409", description = "Transaction not awaiting customer confirmation")
+    })
     @PostMapping("/{transactionId}/customer-confirmation")
     public ResponseEntity<Void> confirmTransactionByCustomer(
             @PathVariable UUID transactionId,
@@ -94,6 +118,14 @@ public class TransferController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Submit analyst decision on a transaction")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Decision recorded"),
+        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — requires ANALYST role"),
+        @ApiResponse(responseCode = "404", description = "Transaction not found"),
+        @ApiResponse(responseCode = "409", description = "Transaction not awaiting analyst decision")
+    })
     @PostMapping("/{transactionId}/analyst-decision")
     public ResponseEntity<Void> decideTransactionAsAnalyst(
             @PathVariable UUID transactionId,
