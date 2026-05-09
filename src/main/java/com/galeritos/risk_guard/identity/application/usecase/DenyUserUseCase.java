@@ -14,6 +14,9 @@ import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.U
 
 @Service
 public class DenyUserUseCase {
+
+    static final int MAX_REJECTION_COUNT = 3;
+
     private final UserRepository userRepository;
     private final RecordAdminDecisionUseCase recordAdminDecisionUseCase;
 
@@ -30,7 +33,13 @@ public class DenyUserUseCase {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         UserStatus fromStatus = user.getStatus();
-        user.reject();
+
+        if (user.getRejectionCount() + 1 >= MAX_REJECTION_COUNT) {
+            user.rejectAndBlock();
+        } else {
+            user.reject();
+        }
+
         user = userRepository.save(user);
         recordAdminDecisionUseCase.recordStatusChange(
                 AdminDecisionAction.DENY_USER,

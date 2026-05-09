@@ -26,6 +26,7 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/DenyUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/LoginUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/RegisterUserUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinLockUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/SuspendUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/TransferAccessGuardUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/UnblockUserUseCaseTest.java

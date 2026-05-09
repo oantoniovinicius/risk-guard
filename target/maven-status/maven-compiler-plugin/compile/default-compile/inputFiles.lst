@@ -117,6 +117,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/ListPendingUsersUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/LoginUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/RegisterUserUseCase.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinLockUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/SuspendUserUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/TransferAccessGuardUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/UnblockUserUseCase.java
@@ -131,6 +132,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/InvalidPinException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/InvalidUserStatusTransitionException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/PinAlreadyDefinedException.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/PinBlockedException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/PinNotConfiguredException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/UnauthenticatedAccessException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/domain/exception/UserCredentialDisabledException.java

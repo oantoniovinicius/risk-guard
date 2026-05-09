@@ -27,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     boolean existsByDocument(String document);
 
+    boolean existsByDocumentAndIdNot(String document, UUID id);
+
     List<User> findAllByStatusOrderByCreatedAtAsc(UserStatus status);
 
     long countByStatus(UserStatus status);
