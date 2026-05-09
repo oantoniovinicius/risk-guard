@@ -18,8 +18,13 @@ import com.galeritos.risk_guard.identity.infrastructure.controller.dto.LoginResp
 import com.galeritos.risk_guard.identity.infrastructure.controller.dto.RegisterRequest;
 import com.galeritos.risk_guard.identity.infrastructure.controller.dto.RegisterResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name = "Auth", description = "User registration and login")
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -31,6 +36,12 @@ public class AuthController {
         this.loginUseCase = loginUseCase;
     }
 
+    @Operation(summary = "Register a new user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "User registered, status PENDING"),
+        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "409", description = "Email or document already in use")
+    })
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         User user = registerUserUseCase.execute(new RegisterUserCommand(
@@ -47,6 +58,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Login and obtain JWT token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Authentication successful"),
+        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResult result = loginUseCase.execute(new LoginCommand(request.email(), request.password()));

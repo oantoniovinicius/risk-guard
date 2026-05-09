@@ -24,7 +24,9 @@ import com.galeritos.risk_guard.shared.enums.RiskLevel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Analyst", description = "Analyst review queue and transaction detail")
 @RestController
 @RequestMapping("/analyst/transactions")
 public class AnalystTransactionController {

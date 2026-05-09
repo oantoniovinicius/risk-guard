@@ -17,8 +17,10 @@ import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminSett
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name = "Admin - Parameters", description = "Risk threshold and system parameter management")
 @RestController
 @RequestMapping("/admin/parameters")
 public class AdminParametersController {

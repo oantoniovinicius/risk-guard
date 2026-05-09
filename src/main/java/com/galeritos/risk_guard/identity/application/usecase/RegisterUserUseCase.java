@@ -1,5 +1,7 @@
 package com.galeritos.risk_guard.identity.application.usecase;
 
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +36,27 @@ public class RegisterUserUseCase {
         String normalizedEmail = command.email().trim().toLowerCase();
         String normalizedDocument = command.document().trim();
 
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new EmailAlreadyInUseException(normalizedEmail);
+        Optional<User> existingByEmail = userRepository.findByEmail(normalizedEmail);
+
+        if (existingByEmail.isPresent()) {
+            User existing = existingByEmail.get();
+            if (existing.getStatus() != UserStatus.REJECTED) {
+                throw new EmailAlreadyInUseException(normalizedEmail);
+            }
+            if (userRepository.existsByDocumentAndIdNot(normalizedDocument, existing.getId())) {
+                throw new DocumentAlreadyInUseException(normalizedDocument);
+            }
+            existing.resubmit(command.name().trim(), normalizedDocument);
+            User saved = userRepository.save(existing);
+
+            UserCredential credential = userCredentialRepository.findByUserId(saved.getId())
+                    .orElseThrow(() -> new IllegalStateException("Credential missing for user " + saved.getId()));
+            credential.resetForResubmission(passwordEncoder.encode(command.password()));
+            userCredentialRepository.save(credential);
+
+            return saved;
         }
+
         if (userRepository.existsByDocument(normalizedDocument)) {
             throw new DocumentAlreadyInUseException(normalizedDocument);
         }

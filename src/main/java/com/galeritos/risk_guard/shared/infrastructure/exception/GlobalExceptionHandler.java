@@ -22,6 +22,7 @@ import com.galeritos.risk_guard.identity.domain.exception.InvalidCredentialsExce
 import com.galeritos.risk_guard.identity.domain.exception.InvalidPinException;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidUserStatusTransitionException;
 import com.galeritos.risk_guard.identity.domain.exception.PinAlreadyDefinedException;
+import com.galeritos.risk_guard.identity.domain.exception.PinBlockedException;
 import com.galeritos.risk_guard.identity.domain.exception.PinNotConfiguredException;
 import com.galeritos.risk_guard.identity.domain.exception.UnauthenticatedAccessException;
 import com.galeritos.risk_guard.identity.domain.exception.UserCredentialDisabledException;
@@ -162,6 +163,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PinNotConfiguredException.class)
     public ResponseEntity<?> handlePinNotConfigured(PinNotConfiguredException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(PinBlockedException.class)
+    public ResponseEntity<?> handlePinBlocked(PinBlockedException ex) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse(ex.getMessage()));

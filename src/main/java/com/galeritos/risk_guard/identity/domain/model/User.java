@@ -48,6 +48,9 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "rejection_count", nullable = false)
+    private int rejectionCount;
+
     protected User() {
     }
 
@@ -60,6 +63,7 @@ public class User {
         this.status = status;
         this.suspect = false;
         this.createdAt = LocalDateTime.now();
+        this.rejectionCount = 0;
     }
 
     public void markAsSuspect() {
@@ -81,7 +85,25 @@ public class User {
         if (status != UserStatus.PENDING) {
             throw new InvalidUserStatusTransitionException(status, UserStatus.REJECTED);
         }
+        this.rejectionCount++;
         this.status = UserStatus.REJECTED;
+    }
+
+    public void rejectAndBlock() {
+        if (status != UserStatus.PENDING) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.BLOCKED);
+        }
+        this.rejectionCount++;
+        this.status = UserStatus.BLOCKED;
+    }
+
+    public void resubmit(String name, String document) {
+        if (status != UserStatus.REJECTED) {
+            throw new InvalidUserStatusTransitionException(status, UserStatus.PENDING);
+        }
+        this.name = name;
+        this.document = document;
+        this.status = UserStatus.PENDING;
     }
 
     public void suspend() {

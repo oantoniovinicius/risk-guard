@@ -38,6 +38,7 @@ import com.galeritos.risk_guard.identity.application.usecase.DenyUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.GetUserDetailUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.ListPendingUsersUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.SuspendUserUseCase;
+import com.galeritos.risk_guard.identity.application.usecase.ResetPinLockUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnblockUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnsuspendUserUseCase;
 import com.galeritos.risk_guard.identity.domain.model.User;
@@ -47,8 +48,10 @@ import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name = "Admin - Users", description = "User moderation, role management, and decision history")
 @RestController
 @RequestMapping("/admin/users")
 public class AdminUserController {
@@ -65,6 +68,7 @@ public class AdminUserController {
     private final GetUserDetailUseCase getUserDetailUseCase;
     private final ListUsersUseCase listUsersUseCase;
     private final GetUserTransactionsUseCase getUserTransactionsUseCase;
+    private final ResetPinLockUseCase resetPinLockUseCase;
 
     public AdminUserController(
             ApproveUserUseCase approveUserUseCase,
@@ -78,7 +82,8 @@ public class AdminUserController {
             ListPendingUsersUseCase listPendingUsersUseCase,
             GetUserDetailUseCase getUserDetailUseCase,
             ListUsersUseCase listUsersUseCase,
-            GetUserTransactionsUseCase getUserTransactionsUseCase) {
+            GetUserTransactionsUseCase getUserTransactionsUseCase,
+            ResetPinLockUseCase resetPinLockUseCase) {
         this.approveUserUseCase = approveUserUseCase;
         this.denyUserUseCase = denyUserUseCase;
         this.suspendUserUseCase = suspendUserUseCase;
@@ -91,6 +96,7 @@ public class AdminUserController {
         this.getUserDetailUseCase = getUserDetailUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.getUserTransactionsUseCase = getUserTransactionsUseCase;
+        this.resetPinLockUseCase = resetPinLockUseCase;
     }
 
     @Operation(summary = "List pending users")
@@ -259,6 +265,19 @@ public class AdminUserController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 AdminDecisionHistoryMapper.toPageResponse(getAdminDecisionHistoryUseCase.execute(null, page, size)));
+    }
+
+    @Operation(summary = "Reset PIN lock for a user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "PIN lock reset"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    @PostMapping("/{userId}/reset-pin-lock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetPinLock(@PathVariable UUID userId) {
+        resetPinLockUseCase.execute(userId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Get paginated transaction history for a user")

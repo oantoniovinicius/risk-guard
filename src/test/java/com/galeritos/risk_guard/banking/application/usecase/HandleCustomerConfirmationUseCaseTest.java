@@ -34,6 +34,7 @@ import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
 import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
 import com.galeritos.risk_guard.identity.application.service.PinService;
 import com.galeritos.risk_guard.identity.domain.exception.InvalidPinException;
+import com.galeritos.risk_guard.identity.domain.exception.PinBlockedException;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 
 @ExtendWith(MockitoExtension.class)
@@ -245,6 +246,35 @@ class HandleCustomerConfirmationUseCaseTest {
 
         assertThrows(InvalidPinException.class,
                 () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, "wrong"));
+
+        verify(transactionRepository, never()).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldThrowWhenPinIsBlocked() {
+        UUID transactionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        AuthenticatedUser user = new AuthenticatedUser(userId, "user@test.com", Role.USER,
+                java.util.List.of(() -> "ROLE_USER"));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(user);
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("300.00"),
+                TransactionStatus.AWAITING_CUSTOMER,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        doThrow(new PinBlockedException()).when(pinService).validate(userId, "1234");
+
+        assertThrows(PinBlockedException.class,
+                () -> useCase.execute(transactionId, CustomerConfirmationDecision.APPROVE, "1234"));
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);

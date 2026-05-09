@@ -30,8 +30,8 @@ app:
     initial-balance: ${APP_BANKING_INITIAL_BALANCE:1000.00}
   admin:
     defaults:
-      medium-risk-threshold: ${APP_ADMIN_DEFAULT_MEDIUM_RISK_THRESHOLD:0.60}
-      high-risk-threshold: ${APP_ADMIN_DEFAULT_HIGH_RISK_THRESHOLD:0.90}
+      medium-risk-threshold: ${APP_ADMIN_DEFAULT_MEDIUM_RISK_THRESHOLD:0.40}
+      high-risk-threshold: ${APP_ADMIN_DEFAULT_HIGH_RISK_THRESHOLD:0.70}
   security:
     jwt:
       secret-base64: ${APP_JWT_SECRET_BASE64}

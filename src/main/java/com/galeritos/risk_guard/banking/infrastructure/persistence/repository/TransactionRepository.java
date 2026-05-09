@@ -1,5 +1,6 @@
 package com.galeritos.risk_guard.banking.infrastructure.persistence.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
@@ -62,4 +64,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
     Page<Transaction> findUserTransactionsPaged(UUID userId, Pageable pageable);
 
     Page<Transaction> findAll(Specification<Transaction> spec, Pageable pageable);
+
+    long countBySenderIdAndCreatedAtAfter(UUID senderId, LocalDateTime after);
+
+    boolean existsBySenderIdAndReceiverIdAndIdNot(UUID senderId, UUID receiverId, UUID id);
+
+    long countBySenderIdAndStatus(UUID senderId, TransactionStatus status);
+
+    long countByReceiverIdAndStatus(UUID receiverId, TransactionStatus status);
+
+    @Query("""
+                SELECT AVG(t.amount) FROM Transaction t
+                WHERE t.senderId = :senderId
+                  AND t.createdAt >= :since
+                  AND t.id != :excludeId
+                  AND t.status NOT IN (
+                      com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus.DENIED,
+                      com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus.FRAUD_CONFIRMED
+                  )
+            """)
+    Optional<BigDecimal> findAvgAmountBySenderSince(
+            @Param("senderId") UUID senderId,
+            @Param("since") LocalDateTime since,
+            @Param("excludeId") UUID excludeId);
 }

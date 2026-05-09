@@ -25,7 +25,9 @@ import com.galeritos.risk_guard.shared.enums.RiskLevel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Admin - Transactions", description = "Transaction listing and detail for admins")
 @RestController
 @RequestMapping("/admin/transactions")
 public class AdminTransactionController {

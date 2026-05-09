@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.galeritos.risk_guard.admin.application.usecase.RecordAdminDecisionUseCase;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
@@ -36,7 +37,7 @@ class DenyUserUseCaseTest {
     }
 
     @Test
-    void shouldDenyPendingUser() {
+    void shouldRejectPendingUserBelowMaxRejections() {
         UUID userId = UUID.randomUUID();
         User pendingUser = new User(userId, "Pending", "pending@example.com", "12345678901", Role.USER, UserStatus.PENDING);
 
@@ -45,6 +46,21 @@ class DenyUserUseCaseTest {
 
         User denied = useCase.execute(userId);
         assertEquals(UserStatus.REJECTED, denied.getStatus());
+        assertEquals(1, denied.getRejectionCount());
+    }
+
+    @Test
+    void shouldBlockWhenRejectionCountReachesMax() {
+        UUID userId = UUID.randomUUID();
+        User pendingUser = new User(userId, "Pending", "pending@example.com", "12345678901", Role.USER, UserStatus.PENDING);
+        ReflectionTestUtils.setField(pendingUser, "rejectionCount", DenyUserUseCase.MAX_REJECTION_COUNT - 1);
+
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(pendingUser));
+        when(userRepository.save(pendingUser)).thenReturn(pendingUser);
+
+        User result = useCase.execute(userId);
+        assertEquals(UserStatus.BLOCKED, result.getStatus());
+        assertEquals(DenyUserUseCase.MAX_REJECTION_COUNT, result.getRejectionCount());
     }
 
     @Test

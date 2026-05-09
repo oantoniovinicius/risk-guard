@@ -34,6 +34,9 @@ public class UserCredential {
     @Column(name = "pin_hash")
     private String pinHash;
 
+    @Column(name = "failed_pin_attempts", nullable = false)
+    private int failedPinAttempts;
+
     protected UserCredential() {
     }
 
@@ -43,9 +46,24 @@ public class UserCredential {
         this.passwordHash = passwordHash;
         this.enabled = enabled;
         this.pinHash = pinHash;
+        this.failedPinAttempts = 0;
     }
 
     public void setPinHash(String pinHash) {
         this.pinHash = pinHash;
+    }
+
+    public void recordFailedAttempt() {
+        this.failedPinAttempts++;
+    }
+
+    public void resetFailedAttempts() {
+        this.failedPinAttempts = 0;
+    }
+
+    public void resetForResubmission(String newPasswordHash) {
+        this.passwordHash = newPasswordHash;
+        this.pinHash = null;
+        this.failedPinAttempts = 0;
     }
 }
