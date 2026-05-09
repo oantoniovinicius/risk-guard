@@ -33,7 +33,15 @@ public class FinalizeTransactionFinancialUseCase {
         Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
-        if (transaction.getFinancialStatus() != FinancialStatus.RESERVED) {
+        if (transaction.getFinancialStatus() == FinancialStatus.REVERTED) {
+            return;
+        }
+
+        if (transaction.getFinancialStatus() == FinancialStatus.SETTLED) {
+            if (transaction.getStatus() == TransactionStatus.DENIED
+                    || transaction.getStatus() == TransactionStatus.FRAUD_CONFIRMED) {
+                reverseSettlement(transaction);
+            }
             return;
         }
 
@@ -65,5 +73,20 @@ public class FinalizeTransactionFinancialUseCase {
         }
 
         throw new InvalidTransactionFinancialFinalizationException(transaction.getStatus());
+    }
+
+    private void reverseSettlement(Transaction transaction) {
+        Account sender = accountRepository.findByUserIdForUpdate(transaction.getSenderId())
+                .orElseThrow(() -> new AccountNotFoundException("Sender account not found."));
+        Account receiver = accountRepository.findByUserIdForUpdate(transaction.getReceiverId())
+                .orElseThrow(() -> new AccountNotFoundException("Receiver account not found."));
+
+        receiver.debit(transaction.getAmount());
+        sender.credit(transaction.getAmount());
+        transaction.reverseSettlement();
+
+        accountRepository.save(receiver);
+        accountRepository.save(sender);
+        transactionRepository.save(transaction);
     }
 }

@@ -425,4 +425,156 @@ class HandleAnalystDecisionUseCaseTest {
 
         verify(decisionHistoryRepository, never()).save(any());
     }
+
+    // --- DISPUTED paths ---
+
+    @Test
+    void shouldApproveFromDisputedAndKeepSettled() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("200.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.APPROVE);
+
+        assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
+        assertEquals(FinancialStatus.SETTLED, transaction.getFinancialStatus());
+        verify(transactionRepository).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldDenyAndTriggerReversalFromDisputed() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("300.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.DENY);
+
+        assertEquals(TransactionStatus.DENIED, transaction.getStatus());
+        verify(transactionRepository).save(transaction);
+        verify(finalizeTransactionFinancialUseCase).execute(transactionId);
+        verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldConfirmFraudAndTriggerReversalFromDisputed() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("400.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+
+        assertEquals(TransactionStatus.FRAUD_CONFIRMED, transaction.getStatus());
+        verify(transactionRepository).save(transaction);
+        verify(handleFraudConfirmedUseCase).execute(transactionId);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(eventPublisher).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldThrowWhenRequestCustomerConfirmationFromDisputed() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        assertThrows(InvalidAnalystDecisionStateException.class,
+                () -> useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION));
+
+        verify(transactionRepository, never()).save(transaction);
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldPublishApprovedEventFromDisputed() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("80.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId, AnalystDecision.APPROVE);
+
+        ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
+        verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
+        assertEquals(EventTypes.TRANSACTION_APPROVED, captor.getValue().eventType());
+    }
+
+    @Test
+    void shouldRecordDecisionHistoryFromDisputed() {
+        UUID transactionId = UUID.randomUUID();
+        UUID analystId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("250.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+
+        useCase.execute(transactionId, AnalystDecision.DENY);
+
+        ArgumentCaptor<TransactionDecisionHistory> captor = ArgumentCaptor.forClass(TransactionDecisionHistory.class);
+        verify(decisionHistoryRepository).save(captor.capture());
+        TransactionDecisionHistory saved = captor.getValue();
+        assertEquals(transactionId, saved.getTransactionId());
+        assertEquals(analystId, saved.getAnalystId());
+        assertEquals(AnalystDecision.DENY, saved.getDecision());
+        assertEquals(TransactionStatus.DISPUTED, saved.getFromStatus());
+        assertEquals(TransactionStatus.DENIED, saved.getToStatus());
+    }
 }

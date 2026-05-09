@@ -13,6 +13,7 @@ import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundExceptio
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidCustomerConfirmationStateException;
+import com.galeritos.risk_guard.banking.domain.exception.InvalidDisputeStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidTransferException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.identity.domain.exception.DocumentAlreadyInUseException;
@@ -68,6 +69,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidAnalystDecisionStateException.class)
     public ResponseEntity<?> handleInvalidAnalystState(InvalidAnalystDecisionStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidDisputeStateException.class)
+    public ResponseEntity<?> handleInvalidDisputeState(InvalidDisputeStateException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));
