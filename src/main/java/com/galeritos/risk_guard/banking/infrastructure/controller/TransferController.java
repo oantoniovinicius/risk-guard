@@ -14,6 +14,7 @@ import com.galeritos.risk_guard.banking.application.usecase.CreateTransferUseCas
 import com.galeritos.risk_guard.banking.application.usecase.GetTransactionStatusUseCase;
 import com.galeritos.risk_guard.banking.application.usecase.HandleAnalystDecisionUseCase;
 import com.galeritos.risk_guard.banking.application.usecase.HandleCustomerConfirmationUseCase;
+import com.galeritos.risk_guard.banking.application.usecase.OpenDisputeUseCase;
 import com.galeritos.risk_guard.banking.infrastructure.controller.dto.AnalystDecisionRequest;
 import com.galeritos.risk_guard.banking.application.usecase.dto.CreateTransferCommand;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
@@ -37,17 +38,20 @@ public class TransferController {
     private final GetTransactionStatusUseCase getTransactionStatusUseCase;
     private final HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase;
     private final HandleAnalystDecisionUseCase handleAnalystDecisionUseCase;
+    private final OpenDisputeUseCase openDisputeUseCase;
     private final TransferAccessGuardUseCase transferAccessGuardUseCase;
 
     public TransferController(CreateTransferUseCase createTransferUseCase,
             GetTransactionStatusUseCase getTransactionStatusUseCase,
             HandleCustomerConfirmationUseCase handleCustomerConfirmationUseCase,
             HandleAnalystDecisionUseCase handleAnalystDecisionUseCase,
+            OpenDisputeUseCase openDisputeUseCase,
             TransferAccessGuardUseCase transferAccessGuardUseCase) {
         this.createTransferUseCase = createTransferUseCase;
         this.getTransactionStatusUseCase = getTransactionStatusUseCase;
         this.handleCustomerConfirmationUseCase = handleCustomerConfirmationUseCase;
         this.handleAnalystDecisionUseCase = handleAnalystDecisionUseCase;
+        this.openDisputeUseCase = openDisputeUseCase;
         this.transferAccessGuardUseCase = transferAccessGuardUseCase;
     }
 
@@ -124,7 +128,7 @@ public class TransferController {
         @ApiResponse(responseCode = "400", description = "Validation error"),
         @ApiResponse(responseCode = "403", description = "Forbidden — requires ANALYST role"),
         @ApiResponse(responseCode = "404", description = "Transaction not found"),
-        @ApiResponse(responseCode = "409", description = "Transaction not awaiting analyst decision")
+        @ApiResponse(responseCode = "409", description = "Transaction not in a state that accepts analyst decisions")
     })
     @PostMapping("/{transactionId}/analyst-decision")
     public ResponseEntity<Void> decideTransactionAsAnalyst(
@@ -132,6 +136,20 @@ public class TransferController {
             @Valid @RequestBody AnalystDecisionRequest request) {
         transferAccessGuardUseCase.assertCanActAsAnalyst();
         handleAnalystDecisionUseCase.execute(transactionId, request.decision());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Open a dispute on an approved transaction")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Dispute opened"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — not the sender or user not ACTIVE"),
+        @ApiResponse(responseCode = "404", description = "Transaction not found"),
+        @ApiResponse(responseCode = "409", description = "Transaction is not in APPROVED status")
+    })
+    @PostMapping("/{transactionId}/dispute")
+    public ResponseEntity<Void> openDispute(@PathVariable UUID transactionId) {
+        transferAccessGuardUseCase.assertCanOpenDispute(transactionId);
+        openDisputeUseCase.execute(transactionId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -27,8 +27,10 @@ public class ListAnalystQueueUseCase {
     public Page<Transaction> execute(RiskLevel riskLevel, LocalDateTime from, LocalDateTime to, int page, int size) {
         List<Specification<Transaction>> specs = new ArrayList<>();
 
-        // Always scope to the analyst queue — this use case has exactly one purpose
-        specs.add((root, q, cb) -> cb.equal(root.get("status"), TransactionStatus.AWAITING_ANALYST));
+        // Scope to transactions requiring analyst attention: pending review and open
+        // disputes
+        specs.add((root, q, cb) -> root.get("status").in(
+                TransactionStatus.AWAITING_ANALYST, TransactionStatus.DISPUTED));
 
         if (riskLevel != null) {
             specs.add((root, q, cb) -> cb.equal(root.get("riskLevel"), riskLevel));
@@ -40,7 +42,7 @@ public class ListAnalystQueueUseCase {
             specs.add((root, q, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
         }
 
-        // Ascending: oldest first — the longest-waiting transaction is the most urgent
+        // oldest first — the longest-waiting transaction is the most urgent
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return transactionRepository.findAll(Specification.allOf(specs), pageable);
     }

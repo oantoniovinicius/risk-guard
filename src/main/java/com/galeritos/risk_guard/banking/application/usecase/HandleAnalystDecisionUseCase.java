@@ -67,6 +67,22 @@ public class HandleAnalystDecisionUseCase {
             return;
         }
 
+        if (transaction.getStatus() == TransactionStatus.DISPUTED) {
+            TransactionStatus fromStatus = transaction.getStatus();
+            applyFromDisputed(transaction, decision);
+            TransactionStatus toStatus = transaction.getStatus();
+
+            transactionRepository.save(transaction);
+
+            UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
+            decisionHistoryRepository.save(
+                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus));
+
+            publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
+            triggerPostTransitionSideEffectsFromDisputed(transactionId, decision);
+            return;
+        }
+
         if (transaction.getStatus() == TransactionStatus.APPROVED && decision == AnalystDecision.APPROVE) {
             finalizeTransactionFinancialUseCase.execute(transactionId);
             return;
@@ -99,6 +115,15 @@ public class HandleAnalystDecisionUseCase {
         }
     }
 
+    private void applyFromDisputed(Transaction transaction, AnalystDecision decision) {
+        switch (decision) {
+            case APPROVE -> transaction.approve();
+            case DENY -> transaction.deny();
+            case CONFIRM_FRAUD -> transaction.confirmFraud();
+            default -> throw new InvalidAnalystDecisionStateException(transaction.getStatus(), decision);
+        }
+    }
+
     private void triggerPostTransitionSideEffects(UUID transactionId, AnalystDecision decision) {
         switch (decision) {
             case APPROVE, DENY -> finalizeTransactionFinancialUseCase.execute(transactionId);
@@ -106,6 +131,15 @@ public class HandleAnalystDecisionUseCase {
             case REQUEST_CUSTOMER_CONFIRMATION -> {
                 // No financial finalization while awaiting customer confirmation.
             }
+        }
+    }
+
+    private void triggerPostTransitionSideEffectsFromDisputed(UUID transactionId, AnalystDecision decision) {
+        switch (decision) {
+            case DENY -> finalizeTransactionFinancialUseCase.execute(transactionId);
+            case CONFIRM_FRAUD -> handleFraudConfirmedUseCase.execute(transactionId);
+            case APPROVE -> { /* dispute rejected: transaction back to APPROVED, settlement stands */ }
+            default -> { /* never reached — applyFromDisputed already threw */ }
         }
     }
 

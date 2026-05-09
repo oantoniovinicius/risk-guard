@@ -135,7 +135,7 @@ class FinalizeTransactionFinancialUseCaseTest {
     }
 
     @Test
-    void shouldIgnoreWhenFinancialStatusAlreadyFinalized() {
+    void shouldIgnoreWhenApprovedAndAlreadySettled() {
         UUID transactionId = UUID.randomUUID();
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -154,6 +154,94 @@ class FinalizeTransactionFinancialUseCaseTest {
         verify(accountRepository, never()).findByUserIdForUpdate(org.mockito.ArgumentMatchers.any(UUID.class));
         verify(accountRepository, never()).save(org.mockito.ArgumentMatchers.any(Account.class));
         verify(transactionRepository, never()).save(transaction);
+    }
+
+    @Test
+    void shouldIgnoreWhenAlreadyReverted() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                TransactionStatus.DENIED,
+                FinancialStatus.REVERTED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+
+        useCase.execute(transactionId);
+
+        verify(accountRepository, never()).findByUserIdForUpdate(org.mockito.ArgumentMatchers.any(UUID.class));
+        verify(accountRepository, never()).save(org.mockito.ArgumentMatchers.any(Account.class));
+        verify(transactionRepository, never()).save(transaction);
+    }
+
+    @Test
+    void shouldReverseSettlementWhenDeniedFromDispute() {
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
+        UUID transactionId = UUID.randomUUID();
+
+        Transaction transaction = new Transaction(
+                senderId,
+                receiverId,
+                new BigDecimal("120.00"),
+                TransactionStatus.DENIED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        Account sender = new Account(UUID.randomUUID(), senderId, new BigDecimal("50.00"), BigDecimal.ZERO);
+        Account receiver = new Account(UUID.randomUUID(), receiverId, new BigDecimal("200.00"), BigDecimal.ZERO);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(sender));
+        when(accountRepository.findByUserIdForUpdate(receiverId)).thenReturn(Optional.of(receiver));
+
+        useCase.execute(transactionId);
+
+        assertEquals(0, receiver.getBalance().compareTo(new BigDecimal("80.00")));
+        assertEquals(0, sender.getBalance().compareTo(new BigDecimal("170.00")));
+        assertEquals(FinancialStatus.REVERTED, transaction.getFinancialStatus());
+        verify(accountRepository).save(receiver);
+        verify(accountRepository).save(sender);
+        verify(transactionRepository).save(transaction);
+    }
+
+    @Test
+    void shouldReverseSettlementWhenFraudConfirmedFromDispute() {
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
+        UUID transactionId = UUID.randomUUID();
+
+        Transaction transaction = new Transaction(
+                senderId,
+                receiverId,
+                new BigDecimal("90.00"),
+                TransactionStatus.FRAUD_CONFIRMED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        Account sender = new Account(UUID.randomUUID(), senderId, new BigDecimal("10.00"), BigDecimal.ZERO);
+        Account receiver = new Account(UUID.randomUUID(), receiverId, new BigDecimal("150.00"), BigDecimal.ZERO);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(accountRepository.findByUserIdForUpdate(senderId)).thenReturn(Optional.of(sender));
+        when(accountRepository.findByUserIdForUpdate(receiverId)).thenReturn(Optional.of(receiver));
+
+        useCase.execute(transactionId);
+
+        assertEquals(0, receiver.getBalance().compareTo(new BigDecimal("60.00")));
+        assertEquals(0, sender.getBalance().compareTo(new BigDecimal("100.00")));
+        assertEquals(FinancialStatus.REVERTED, transaction.getFinancialStatus());
+        verify(accountRepository).save(receiver);
+        verify(accountRepository).save(sender);
+        verify(transactionRepository).save(transaction);
     }
 
     @Test

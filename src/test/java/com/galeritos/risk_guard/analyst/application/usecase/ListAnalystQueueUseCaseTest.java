@@ -45,9 +45,15 @@ class ListAnalystQueueUseCaseTest {
                 TransactionStatus.AWAITING_ANALYST, FinancialStatus.RESERVED, null, LocalDateTime.now());
     }
 
+    private Transaction disputedTransaction() {
+        return new Transaction(
+                UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("300.00"),
+                TransactionStatus.DISPUTED, FinancialStatus.SETTLED, null, LocalDateTime.now());
+    }
+
     @Test
     void shouldReturnPagedQueueSortedOldestFirst() {
-        Page<Transaction> expected = new PageImpl<>(List.of(awaitingAnalystTransaction()));
+        Page<Transaction> expected = new PageImpl<>(List.of(awaitingAnalystTransaction(), disputedTransaction()));
         when(transactionRepository.findAll(ArgumentMatchers.<Specification<Transaction>>any(), any(Pageable.class))).thenReturn(expected);
 
         Page<Transaction> result = useCase.execute(null, null, null, 0, 20);
@@ -104,5 +110,20 @@ class ListAnalystQueueUseCaseTest {
         Page<Transaction> result = useCase.execute(null, null, null, 0, 20);
 
         assertEquals(0, result.getTotalElements());
+    }
+
+    @Test
+    void shouldIncludeDisputedTransactionsAlongsideAwaitingAnalyst() {
+        Transaction awaiting = awaitingAnalystTransaction();
+        Transaction disputed = disputedTransaction();
+        Page<Transaction> expected = new PageImpl<>(List.of(awaiting, disputed));
+        when(transactionRepository.findAll(ArgumentMatchers.<Specification<Transaction>>any(), any(Pageable.class)))
+                .thenReturn(expected);
+
+        Page<Transaction> result = useCase.execute(null, null, null, 0, 20);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals(TransactionStatus.AWAITING_ANALYST, result.getContent().get(0).getStatus());
+        assertEquals(TransactionStatus.DISPUTED, result.getContent().get(1).getStatus());
     }
 }
