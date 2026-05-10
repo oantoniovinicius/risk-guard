@@ -182,11 +182,4 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse(ex.getMessage()));
     }
-
-    @ExceptionHandler(InvalidDisputeStateException.class)
-    public ResponseEntity<?> handleInvalidDisputeState(InvalidDisputeStateException ex) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse(ex.getMessage()));
-    }
 }
