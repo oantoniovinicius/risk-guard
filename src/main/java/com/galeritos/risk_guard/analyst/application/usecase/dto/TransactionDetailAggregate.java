@@ -10,6 +10,7 @@ import com.galeritos.risk_guard.risk.domain.model.RiskAnalysis;
 public record TransactionDetailAggregate(
         Transaction transaction,
         User sender,
+        User receiver,
         RiskAnalysis riskAnalysis,
         List<TransactionDecisionHistory> decisionHistory) {
 }

@@ -43,6 +43,9 @@ public class TransactionDecisionHistory {
     @Column(name = "to_status", nullable = false)
     private TransactionStatus toStatus;
 
+    @Column(length = 500)
+    private String reason;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -50,12 +53,13 @@ public class TransactionDecisionHistory {
     }
 
     public TransactionDecisionHistory(UUID transactionId, UUID analystId, AnalystDecision decision,
-            TransactionStatus fromStatus, TransactionStatus toStatus) {
+            TransactionStatus fromStatus, TransactionStatus toStatus, String reason) {
         this.transactionId = transactionId;
         this.analystId = analystId;
         this.decision = decision;
         this.fromStatus = fromStatus;
         this.toStatus = toStatus;
+        this.reason = reason;
         this.createdAt = LocalDateTime.now();
     }
 }

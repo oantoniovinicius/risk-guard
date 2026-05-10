@@ -44,6 +44,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/application/usecase/dto/TransactionDetailAggregate.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/AnalystTransactionController.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/dto/AnalystDecisionHistoryItemResponse.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/dto/AnalystReceiverProfileResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/dto/AnalystRiskSummaryResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/dto/AnalystSenderProfileResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/analyst/infrastructure/controller/dto/AnalystTransactionDetailResponse.java
@@ -62,6 +63,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationTimeoutUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/HandleCustomerConfirmationUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/HandleFraudConfirmedUseCase.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/ListUserTransfersUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/OpenDisputeUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/dto/CreateTransferCommand.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AccountNotFoundException.java
@@ -88,6 +90,8 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/controller/dto/CreateTransferResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/controller/dto/CustomerConfirmationRequest.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/controller/dto/TransactionStatusResponse.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/controller/dto/UserTransferPageResponse.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/controller/dto/UserTransferResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/messaging/RabbitMqEventPublisher.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/messaging/TransactionAnalyzedListener.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/infrastructure/messaging/UserApprovedListener.java
@@ -99,6 +103,8 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/AdminSettingsDefaultsProperties.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/BankingConfig.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/BankingProperties.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/CustomAccessDeniedHandler.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/CustomAuthenticationEntryPoint.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/JwtAuthenticationFilter.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/JwtProperties.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/MessagingProperties.java
@@ -154,6 +160,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/controller/dto/LoginResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/controller/dto/RegisterRequest.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/controller/dto/RegisterResponse.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/controller/dto/UserProfileResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/messaging/RabbitMqIdentityEventPublisher.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/persistence/repository/PasswordResetTokenRepository.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/infrastructure/persistence/repository/UserCredentialRepository.java

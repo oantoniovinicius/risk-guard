@@ -33,6 +33,14 @@ public class ChangeUserRoleUseCase {
             throw new InvalidRoleChangeException(userId, currentRole, requestedRole);
         }
 
+        if (requestedRole == Role.ADMIN) {
+            throw new InvalidRoleChangeException(userId, currentRole, requestedRole);
+        }
+
+        if (currentRole == Role.ADMIN) {
+            throw new InvalidRoleChangeException(userId, currentRole, requestedRole);
+        }
+
         user.changeRole(requestedRole);
         user = userRepository.save(user);
         recordAdminDecisionUseCase.recordRoleChange(user, currentRole, requestedRole);

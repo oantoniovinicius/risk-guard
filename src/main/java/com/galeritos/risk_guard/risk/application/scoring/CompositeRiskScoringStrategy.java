@@ -31,7 +31,7 @@ public class CompositeRiskScoringStrategy implements RiskScoringStrategy {
             RuleResult result = rule.evaluate(context);
             if (result.fired()) {
                 total += result.contribution();
-                signals.add(result.signal());
+                signals.add(String.format("%s (+%.2f)", result.signal(), result.contribution()));
             }
         }
 
