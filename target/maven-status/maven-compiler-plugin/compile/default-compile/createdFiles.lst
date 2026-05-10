@@ -136,7 +136,6 @@ com/galeritos/risk_guard/banking/domain/exception/InvalidTransactionStateTransit
 com/galeritos/risk_guard/banking/infrastructure/controller/TransferController.class
 com/galeritos/risk_guard/banking/application/usecase/CreateTransferUseCase.class
 com/galeritos/risk_guard/identity/domain/exception/UserNotActiveException.class
-com/galeritos/risk_guard/risk/application/scoring/UserHistoryRule.class
 com/galeritos/risk_guard/config/SecurityConfig.class
 com/galeritos/risk_guard/identity/domain/exception/ForbiddenTransferOperationException.class
 com/galeritos/risk_guard/risk/application/port/out/RiskThresholdsProvider.class

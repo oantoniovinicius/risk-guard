@@ -21,7 +21,6 @@ class CompositeRiskScoringStrategyTest {
                     new OffHoursRule(),
                     new TransactionFrequencyRule(),
                     new NewReceiverRule(),
-                    new UserHistoryRule(),
                     new ReceiverProfileRule()));
 
     private RiskScoringContext ctx(
@@ -77,7 +76,7 @@ class CompositeRiskScoringStrategyTest {
     void shouldJoinSignalsWithSemicolon() {
         RiskScoringContext context = ctx(
                 new BigDecimal("300.00"), new BigDecimal("100.00"),
-                3, 1L, 2L, false, true, 0L, false, 0L);
+                3, 1L, 2L, true, false, 0L, false, 0L);
 
         RiskScore score = strategy.score(context);
 

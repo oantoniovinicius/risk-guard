@@ -18,6 +18,9 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.domain.model.User;
+import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -26,14 +29,17 @@ public class CreateTransferUseCase {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final BankingEventPublisher eventPublisher;
+    private final UserRepository userRepository;
 
     public CreateTransferUseCase(
             AccountRepository accountRepository,
             TransactionRepository transactionRepository,
-            BankingEventPublisher eventPublisher) {
+            BankingEventPublisher eventPublisher,
+            UserRepository userRepository) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.eventPublisher = eventPublisher;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -46,6 +52,11 @@ public class CreateTransferUseCase {
                 .orElseThrow(() -> new AccountNotFoundException("Sender account not found."));
         if (!accountRepository.existsByUserId(command.receiverId())) {
             throw new AccountNotFoundException("Receiver account not found.");
+        }
+
+        User receiver = userRepository.findById(command.receiverId()).orElse(null);
+        if (receiver != null && receiver.getStatus() == UserStatus.BLOCKED) {
+            throw new InvalidTransferException("Cannot transfer to a blocked account.");
         }
 
         if (command.amount().compareTo(BigDecimal.ZERO) <= 0) {

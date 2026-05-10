@@ -12,12 +12,12 @@ public class ReceiverProfileRule implements RiskRule {
     @Override
     public RuleResult evaluate(RiskScoringContext ctx) {
         if (ctx.receiverFraudConfirmedCount() > 0) {
-            return new RuleResult(0.25,
+            return new RuleResult(0.70,
                     String.format("recipient account has %d confirmed fraud case(s) as receiver",
                             ctx.receiverFraudConfirmedCount()));
         }
         if (ctx.receiverIsSuspect()) {
-            return new RuleResult(0.15, "recipient account is flagged as suspect");
+            return new RuleResult(0.40, "recipient account is flagged as suspect");
         }
         return RuleResult.none();
     }
