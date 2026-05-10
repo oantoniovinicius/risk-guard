@@ -69,13 +69,6 @@ public class Account {
         balance = balance.add(amount);
     }
 
-    public void debit(BigDecimal amount) {
-        if (balance.compareTo(amount) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance to debit");
-        }
-        balance = balance.subtract(amount);
-    }
-
     public Account(UUID id, UUID userId, BigDecimal balance, BigDecimal reservedBalance) {
         this.id = id;
         this.userId = userId;
