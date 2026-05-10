@@ -152,4 +152,18 @@ public class TransferController {
         handleAnalystDecisionUseCase.execute(transactionId, request.decision());
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Open a dispute on an approved transaction")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Dispute opened"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — not the sender or user not ACTIVE"),
+        @ApiResponse(responseCode = "404", description = "Transaction not found"),
+        @ApiResponse(responseCode = "409", description = "Transaction is not in APPROVED status")
+    })
+    @PostMapping("/{transactionId}/dispute")
+    public ResponseEntity<Void> openDispute(@PathVariable UUID transactionId) {
+        transferAccessGuardUseCase.assertCanOpenDispute(transactionId);
+        openDisputeUseCase.execute(transactionId);
+        return ResponseEntity.noContent().build();
+    }
 }

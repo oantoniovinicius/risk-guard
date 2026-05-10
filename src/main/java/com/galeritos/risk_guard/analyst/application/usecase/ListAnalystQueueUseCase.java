@@ -39,7 +39,7 @@ public class ListAnalystQueueUseCase {
             specs.add((root, q, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
         }
 
-        // Ascending: oldest first — the longest-waiting transaction is the most urgent
+        // oldest first — the longest-waiting transaction is the most urgent
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         return transactionRepository.findAll(Specification.allOf(specs), pageable);
     }

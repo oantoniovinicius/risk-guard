@@ -2,6 +2,7 @@ package com.galeritos.risk_guard.banking.infrastructure.scheduling;
 
 import java.time.LocalDateTime;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class CustomerConfirmationTimeoutScheduler {
     }
 
     @Scheduled(fixedDelayString = "${banking.customer-confirmation-timeout-check-delay-ms:60000}")
+    @SchedulerLock(name = "customerConfirmationTimeoutCheck", lockAtMostFor = "PT2M", lockAtLeastFor = "PT30S")
     public void checkExpiredCustomerConfirmations() {
         handleCustomerConfirmationTimeoutUseCase.execute(LocalDateTime.now());
     }

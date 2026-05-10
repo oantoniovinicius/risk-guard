@@ -104,6 +104,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/MessagingProperties.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/OpenApiConfig.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/RabbitMqConfig.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/SchedulerLockConfig.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/config/SecurityConfig.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/event/UserApprovedEvent.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/port/out/IdentityEventPublisher.java

@@ -74,6 +74,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidDisputeStateException.class)
+    public ResponseEntity<?> handleInvalidDisputeState(InvalidDisputeStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(EmailAlreadyInUseException.class)
     public ResponseEntity<?> handleEmailConflict(EmailAlreadyInUseException ex) {
         return ResponseEntity
