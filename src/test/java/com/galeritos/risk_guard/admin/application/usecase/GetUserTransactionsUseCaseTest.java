@@ -3,7 +3,6 @@ package com.galeritos.risk_guard.admin.application.usecase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
@@ -55,22 +55,22 @@ class GetUserTransactionsUseCaseTest {
         Page<Transaction> page = new PageImpl<>(transactions);
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(transactionRepository.findUserTransactionsPaged(eq(userId), any(Pageable.class))).thenReturn(page);
+        when(transactionRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        Page<Transaction> result = useCase.execute(userId, 0, 20);
+        Page<Transaction> result = useCase.execute(userId, null, null, null, null, 0, 20);
 
         assertEquals(2, result.getTotalElements());
-        verify(transactionRepository).findUserTransactionsPaged(eq(userId), any(Pageable.class));
+        verify(transactionRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void shouldReturnEmptyPageWhenUserHasNoTransactions() {
         UUID userId = UUID.randomUUID();
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(transactionRepository.findUserTransactionsPaged(eq(userId), any(Pageable.class)))
+        when(transactionRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(Page.empty());
 
-        Page<Transaction> result = useCase.execute(userId, 0, 20);
+        Page<Transaction> result = useCase.execute(userId, null, null, null, null, 0, 20);
 
         assertEquals(0, result.getTotalElements());
     }
@@ -80,6 +80,6 @@ class GetUserTransactionsUseCaseTest {
         UUID userId = UUID.randomUUID();
         when(userRepository.existsById(userId)).thenReturn(false);
 
-        assertThrows(UserNotFoundException.class, () -> useCase.execute(userId, 0, 20));
+        assertThrows(UserNotFoundException.class, () -> useCase.execute(userId, null, null, null, null, 0, 20));
     }
 }

@@ -111,7 +111,8 @@ public class TransferController {
             @ApiResponse(responseCode = "400", description = "Validation error"),
             @ApiResponse(responseCode = "403", description = "Wrong PIN or PIN blocked"),
             @ApiResponse(responseCode = "404", description = "Transaction not found"),
-            @ApiResponse(responseCode = "409", description = "Transaction not awaiting customer confirmation")
+            @ApiResponse(responseCode = "409", description = "Transaction not awaiting customer confirmation"),
+            @ApiResponse(responseCode = "422", description = "Invalid PIN")
     })
     @PostMapping("/{transactionId}/customer-confirmation")
     public ResponseEntity<Void> confirmTransactionByCustomer(
@@ -135,7 +136,7 @@ public class TransferController {
             @PathVariable UUID transactionId,
             @Valid @RequestBody AnalystDecisionRequest request) {
         transferAccessGuardUseCase.assertCanActAsAnalyst();
-        handleAnalystDecisionUseCase.execute(transactionId, request.decision());
+        handleAnalystDecisionUseCase.execute(transactionId, request.decision(), request.reason());
         return ResponseEntity.noContent().build();
     }
 

@@ -1,5 +1,7 @@
 package com.galeritos.risk_guard.admin.infrastructure.controller.mapper;
 
+import java.util.UUID;
+
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserDetailResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserRoleResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminUserStatusResponse;
@@ -22,7 +24,7 @@ public final class AdminUserMapper {
                 user.getCreatedAt());
     }
 
-    public static AdminUserDetailResponse toDetail(User user) {
+    public static AdminUserDetailResponse toDetail(User user, UUID accountId) {
         return new AdminUserDetailResponse(
                 user.getId(),
                 user.getName(),
@@ -31,6 +33,7 @@ public final class AdminUserMapper {
                 user.getRole(),
                 user.getStatus(),
                 user.isSuspect(),
+                accountId,
                 user.getCreatedAt());
     }
 

@@ -82,10 +82,14 @@ class GetAnalystTransactionDetailUseCaseTest {
         RiskAnalysis riskAnalysis = buildRiskAnalysis(transactionId);
         List<TransactionDecisionHistory> history = List.of(
                 new TransactionDecisionHistory(transactionId, UUID.randomUUID(), AnalystDecision.DENY,
-                        TransactionStatus.AWAITING_ANALYST, TransactionStatus.DENIED));
+                        TransactionStatus.AWAITING_ANALYST, TransactionStatus.DENIED, null));
+
+        UUID receiverId = transaction.getReceiverId();
+        User receiver = buildUser(receiverId);
 
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
         when(userRepository.findById(senderId)).thenReturn(Optional.of(sender));
+        when(userRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
         when(riskAnalysisRepository.findByTransactionId(transactionId)).thenReturn(Optional.of(riskAnalysis));
         when(decisionHistoryRepository.findByTransactionIdOrderByCreatedAtDesc(transactionId)).thenReturn(history);
 
@@ -94,6 +98,7 @@ class GetAnalystTransactionDetailUseCaseTest {
         assertNotNull(result);
         assertEquals(transaction, result.transaction());
         assertEquals(sender, result.sender());
+        assertEquals(receiver, result.receiver());
         assertEquals(riskAnalysis, result.riskAnalysis());
         assertEquals(1, result.decisionHistory().size());
     }
@@ -106,6 +111,7 @@ class GetAnalystTransactionDetailUseCaseTest {
 
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
         when(userRepository.findById(senderId)).thenReturn(Optional.of(buildUser(senderId)));
+        when(userRepository.findById(transaction.getReceiverId())).thenReturn(Optional.of(buildUser(transaction.getReceiverId())));
         when(riskAnalysisRepository.findByTransactionId(transactionId)).thenReturn(Optional.empty());
         when(decisionHistoryRepository.findByTransactionIdOrderByCreatedAtDesc(transactionId)).thenReturn(List.of());
 
@@ -122,6 +128,7 @@ class GetAnalystTransactionDetailUseCaseTest {
 
         when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
         when(userRepository.findById(senderId)).thenReturn(Optional.of(buildUser(senderId)));
+        when(userRepository.findById(transaction.getReceiverId())).thenReturn(Optional.of(buildUser(transaction.getReceiverId())));
         when(riskAnalysisRepository.findByTransactionId(transactionId)).thenReturn(Optional.empty());
         when(decisionHistoryRepository.findByTransactionIdOrderByCreatedAtDesc(transactionId)).thenReturn(List.of());
 

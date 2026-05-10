@@ -7,13 +7,13 @@ import java.util.UUID;
 
 public record AnalystTransactionDetailResponse(
         UUID transactionId,
-        UUID receiverId,
         BigDecimal amount,
         String status,
         String financialStatus,
         LocalDateTime createdAt,
         LocalDateTime customerDecisionDeadlineAt,
         AnalystSenderProfileResponse sender,
+        AnalystReceiverProfileResponse receiver,
         AnalystRiskSummaryResponse riskAnalysis,
         List<AnalystDecisionHistoryItemResponse> decisionHistory) {
 }

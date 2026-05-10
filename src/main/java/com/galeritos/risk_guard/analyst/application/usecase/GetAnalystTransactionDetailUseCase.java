@@ -43,12 +43,14 @@ public class GetAnalystTransactionDetailUseCase {
         User sender = userRepository.findById(transaction.getSenderId())
                 .orElseThrow(() -> new UserNotFoundException(transaction.getSenderId()));
 
-        // Risk analysis may be absent if the transaction is still being processed
+        User receiver = userRepository.findById(transaction.getReceiverId())
+                .orElseThrow(() -> new UserNotFoundException(transaction.getReceiverId()));
+
         RiskAnalysis riskAnalysis = riskAnalysisRepository.findByTransactionId(transactionId).orElse(null);
 
         List<TransactionDecisionHistory> decisionHistory =
                 decisionHistoryRepository.findByTransactionIdOrderByCreatedAtDesc(transactionId);
 
-        return new TransactionDetailAggregate(transaction, sender, riskAnalysis, decisionHistory);
+        return new TransactionDetailAggregate(transaction, sender, receiver, riskAnalysis, decisionHistory);
     }
 }

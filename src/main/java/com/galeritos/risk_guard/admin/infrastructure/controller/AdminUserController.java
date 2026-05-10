@@ -1,5 +1,6 @@
 package com.galeritos.risk_guard.admin.infrastructure.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ import com.galeritos.risk_guard.admin.application.usecase.ChangeUserRoleUseCase;
 import com.galeritos.risk_guard.admin.application.usecase.GetAdminDecisionHistoryUseCase;
 import com.galeritos.risk_guard.admin.application.usecase.GetUserTransactionsUseCase;
 import com.galeritos.risk_guard.admin.application.usecase.ListUsersUseCase;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.admin.domain.model.AdminDecisionHistory;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminDecisionHistoryResponse;
 import com.galeritos.risk_guard.admin.infrastructure.controller.dto.AdminRoleUpdateRequest;
@@ -32,6 +34,7 @@ import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminDeci
 import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminTransactionMapper;
 import com.galeritos.risk_guard.admin.infrastructure.controller.mapper.AdminUserMapper;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
+import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.identity.application.usecase.ApproveUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.BlockUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.DenyUserUseCase;
@@ -45,6 +48,7 @@ import com.galeritos.risk_guard.identity.application.usecase.UnsuspendUserUseCas
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.shared.enums.RiskLevel;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -71,6 +75,7 @@ public class AdminUserController {
     private final GetUserTransactionsUseCase getUserTransactionsUseCase;
     private final ResetPinLockUseCase resetPinLockUseCase;
     private final ResetPinUseCase resetPinUseCase;
+    private final AccountRepository accountRepository;
 
     public AdminUserController(
             ApproveUserUseCase approveUserUseCase,
@@ -86,7 +91,8 @@ public class AdminUserController {
             ListUsersUseCase listUsersUseCase,
             GetUserTransactionsUseCase getUserTransactionsUseCase,
             ResetPinLockUseCase resetPinLockUseCase,
-            ResetPinUseCase resetPinUseCase) {
+            ResetPinUseCase resetPinUseCase,
+            AccountRepository accountRepository) {
         this.approveUserUseCase = approveUserUseCase;
         this.denyUserUseCase = denyUserUseCase;
         this.suspendUserUseCase = suspendUserUseCase;
@@ -101,6 +107,7 @@ public class AdminUserController {
         this.getUserTransactionsUseCase = getUserTransactionsUseCase;
         this.resetPinLockUseCase = resetPinLockUseCase;
         this.resetPinUseCase = resetPinUseCase;
+        this.accountRepository = accountRepository;
     }
 
     @Operation(summary = "List pending users")
@@ -146,7 +153,11 @@ public class AdminUserController {
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserDetailResponse> getUserDetail(@PathVariable UUID userId) {
-        return ResponseEntity.ok(AdminUserMapper.toDetail(getUserDetailUseCase.execute(userId)));
+        User user = getUserDetailUseCase.execute(userId);
+        UUID accountId = accountRepository.findByUserId(userId)
+                .map(account -> account.getId())
+                .orElse(null);
+        return ResponseEntity.ok(AdminUserMapper.toDetail(user, accountId));
     }
 
     @Operation(summary = "Approve pending user")
@@ -307,9 +318,13 @@ public class AdminUserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminTransactionPageResponse> getUserTransactions(
             @PathVariable UUID userId,
+            @RequestParam(required = false) TransactionStatus status,
+            @RequestParam(required = false) RiskLevel riskLevel,
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<Transaction> result = getUserTransactionsUseCase.execute(userId, page, size);
+        Page<Transaction> result = getUserTransactionsUseCase.execute(userId, status, riskLevel, from, to, page, size);
         return ResponseEntity.ok(new AdminTransactionPageResponse(
                 result.getNumber(),
                 result.getSize(),

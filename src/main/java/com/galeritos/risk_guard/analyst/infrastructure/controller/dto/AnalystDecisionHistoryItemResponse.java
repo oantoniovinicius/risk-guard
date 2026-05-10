@@ -8,5 +8,6 @@ public record AnalystDecisionHistoryItemResponse(
         String decision,
         String fromStatus,
         String toStatus,
+        String reason,
         LocalDateTime decidedAt) {
 }

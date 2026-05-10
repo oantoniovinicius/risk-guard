@@ -47,7 +47,7 @@ public class HandleAnalystDecisionUseCase {
     }
 
     @Transactional
-    public void execute(UUID transactionId, AnalystDecision decision) {
+    public void execute(UUID transactionId, AnalystDecision decision, String reason) {
         Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
@@ -60,7 +60,7 @@ public class HandleAnalystDecisionUseCase {
 
             UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
             decisionHistoryRepository.save(
-                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus));
+                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus, reason));
 
             publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
             triggerPostTransitionSideEffects(transactionId, decision);
@@ -76,7 +76,7 @@ public class HandleAnalystDecisionUseCase {
 
             UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
             decisionHistoryRepository.save(
-                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus));
+                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus, reason));
 
             publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
             triggerPostTransitionSideEffectsFromDisputed(transactionId, decision);

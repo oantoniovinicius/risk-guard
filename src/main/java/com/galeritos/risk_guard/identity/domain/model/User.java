@@ -121,7 +121,7 @@ public class User {
     }
 
     public void block() {
-        if (status != UserStatus.ACTIVE) {
+        if (status != UserStatus.ACTIVE && status != UserStatus.SUSPENDED) {
             throw new InvalidUserStatusTransitionException(status, UserStatus.BLOCKED);
         }
         this.status = UserStatus.BLOCKED;

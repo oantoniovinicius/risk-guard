@@ -89,7 +89,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
@@ -114,7 +114,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.DENY);
+        useCase.execute(transactionId, AnalystDecision.DENY, null);
 
         assertEquals(TransactionStatus.DENIED, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
@@ -139,7 +139,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD, null);
 
         assertEquals(TransactionStatus.FRAUD_CONFIRMED, transaction.getStatus());
         assertNull(transaction.getCustomerDecisionDeadlineAt());
@@ -165,7 +165,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION);
+        useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION, null);
         LocalDateTime after = LocalDateTime.now();
 
         assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
@@ -193,7 +193,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
@@ -216,7 +216,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.DENY);
+        useCase.execute(transactionId, AnalystDecision.DENY, null);
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase).execute(transactionId);
@@ -239,7 +239,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD, null);
 
         verify(transactionRepository, never()).save(transaction);
         verify(handleFraudConfirmedUseCase).execute(transactionId);
@@ -263,7 +263,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION);
+        useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION, null);
 
         assertEquals(TransactionStatus.AWAITING_CUSTOMER, transaction.getStatus());
         verify(transactionRepository, never()).save(transaction);
@@ -277,7 +277,7 @@ class HandleAnalystDecisionUseCaseTest {
         UUID transactionId = UUID.randomUUID();
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.empty());
 
-        assertThrows(TransactionNotFoundException.class, () -> useCase.execute(transactionId, AnalystDecision.APPROVE));
+        assertThrows(TransactionNotFoundException.class, () -> useCase.execute(transactionId, AnalystDecision.APPROVE, null));
 
         verify(transactionRepository, never()).save(org.mockito.ArgumentMatchers.any(Transaction.class));
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
@@ -301,7 +301,7 @@ class HandleAnalystDecisionUseCaseTest {
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
         assertThrows(InvalidAnalystDecisionStateException.class,
-                () -> useCase.execute(transactionId, AnalystDecision.DENY));
+                () -> useCase.execute(transactionId, AnalystDecision.DENY, null));
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
@@ -324,7 +324,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
         verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
@@ -346,7 +346,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.DENY);
+        useCase.execute(transactionId, AnalystDecision.DENY, null);
 
         ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
         verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
@@ -368,7 +368,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD, null);
 
         ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
         verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
@@ -394,7 +394,7 @@ class HandleAnalystDecisionUseCaseTest {
                 new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
                         List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         ArgumentCaptor<TransactionDecisionHistory> captor = ArgumentCaptor.forClass(TransactionDecisionHistory.class);
         verify(decisionHistoryRepository).save(captor.capture());
@@ -421,7 +421,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         verify(decisionHistoryRepository, never()).save(any());
     }
@@ -443,7 +443,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         assertEquals(TransactionStatus.APPROVED, transaction.getStatus());
         assertEquals(FinancialStatus.SETTLED, transaction.getFinancialStatus());
@@ -468,7 +468,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.DENY);
+        useCase.execute(transactionId, AnalystDecision.DENY, null);
 
         assertEquals(TransactionStatus.DENIED, transaction.getStatus());
         verify(transactionRepository).save(transaction);
@@ -492,7 +492,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD);
+        useCase.execute(transactionId, AnalystDecision.CONFIRM_FRAUD, null);
 
         assertEquals(TransactionStatus.FRAUD_CONFIRMED, transaction.getStatus());
         verify(transactionRepository).save(transaction);
@@ -517,7 +517,7 @@ class HandleAnalystDecisionUseCaseTest {
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
         assertThrows(InvalidAnalystDecisionStateException.class,
-                () -> useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION));
+                () -> useCase.execute(transactionId, AnalystDecision.REQUEST_CUSTOMER_CONFIRMATION, null));
 
         verify(transactionRepository, never()).save(transaction);
         verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
@@ -540,7 +540,7 @@ class HandleAnalystDecisionUseCaseTest {
 
         when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
 
-        useCase.execute(transactionId, AnalystDecision.APPROVE);
+        useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         ArgumentCaptor<TransactionStatusChangedEvent> captor = ArgumentCaptor.forClass(TransactionStatusChangedEvent.class);
         verify(eventPublisher).publishTransactionStatusChanged(captor.capture());
@@ -566,7 +566,7 @@ class HandleAnalystDecisionUseCaseTest {
                 new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
                         List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
 
-        useCase.execute(transactionId, AnalystDecision.DENY);
+        useCase.execute(transactionId, AnalystDecision.DENY, null);
 
         ArgumentCaptor<TransactionDecisionHistory> captor = ArgumentCaptor.forClass(TransactionDecisionHistory.class);
         verify(decisionHistoryRepository).save(captor.capture());
