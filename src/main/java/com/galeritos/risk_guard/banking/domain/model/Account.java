@@ -54,6 +54,13 @@ public class Account {
         reservedBalance = reservedBalance.subtract(amount);
     }
 
+    public void debit(BigDecimal amount) {
+        if (balance.compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance to debit settled amount");
+        }
+        balance = balance.subtract(amount);
+    }
+
     public void releaseReserved(BigDecimal amount) {
         if (reservedBalance.compareTo(amount) < 0) {
             throw new InsufficientReservedBalanceException(amount, reservedBalance);

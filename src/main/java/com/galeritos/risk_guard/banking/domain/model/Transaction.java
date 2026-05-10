@@ -161,10 +161,10 @@ public class Transaction {
 
     public void reverseSettlement() {
         if (this.status != TransactionStatus.DENIED && this.status != TransactionStatus.FRAUD_CONFIRMED) {
-            throw new IllegalStateException("Only DENIED or FRAUD_CONFIRMED transactions can have their settlement reversed");
+            throw new IllegalStateException("Only DENIED or FRAUD_CONFIRMED transactions can have settlement reversed");
         }
         if (this.financialStatus != FinancialStatus.SETTLED) {
-            throw new IllegalStateException("Only SETTLED transactions can have their settlement reversed");
+            throw new IllegalStateException("Only SETTLED transactions can have settlement reversed");
         }
         this.financialStatus = FinancialStatus.REVERTED;
     }

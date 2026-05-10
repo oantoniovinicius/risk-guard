@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/transfers").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/transfers/*/status").authenticated()
                         .requestMatchers(HttpMethod.POST, "/transfers/*/customer-confirmation").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/transfers/*/dispute").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/transfers/*/analyst-decision").hasRole("ANALYST")
                         .requestMatchers("/analyst/**").hasRole("ANALYST")
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -61,6 +61,11 @@ public class UserCredential {
         this.failedPinAttempts = 0;
     }
 
+    public void clearPin() {
+        this.pinHash = null;
+        this.failedPinAttempts = 0;
+    }
+
     public void resetForResubmission(String newPasswordHash) {
         this.passwordHash = newPasswordHash;
         this.pinHash = null;

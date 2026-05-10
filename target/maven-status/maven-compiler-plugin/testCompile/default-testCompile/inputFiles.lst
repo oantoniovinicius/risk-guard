@@ -29,6 +29,7 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/LoginUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/RegisterUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinLockUseCaseTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/SuspendUserUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/TransferAccessGuardUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/identity/application/usecase/UnblockUserUseCaseTest.java
@@ -43,3 +44,4 @@
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/scoring/UserHistoryRuleTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/application/usecase/AnalyzeTransactionUseCaseTest.java
 /Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/risk/infrastructure/messaging/TransactionCreatedListenerIntegrationTest.java
+/Users/antonio/Documents/risk-guard/src/test/java/com/galeritos/risk_guard/shared/infrastructure/validation/BrazilianDocumentValidatorTest.java

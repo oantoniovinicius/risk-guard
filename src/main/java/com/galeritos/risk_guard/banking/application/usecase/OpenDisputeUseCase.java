@@ -38,14 +38,9 @@ public class OpenDisputeUseCase {
 
         transaction.dispute();
         transactionRepository.save(transaction);
-        publishStatusChanged(TransactionStatusChangedEvent.from(transaction, EventTypes.TRANSACTION_DISPUTED));
-    }
 
-    private void publishStatusChanged(TransactionStatusChangedEvent event) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            eventPublisher.publishTransactionStatusChanged(event);
-            return;
-        }
+        TransactionStatusChangedEvent event = TransactionStatusChangedEvent.from(
+                transaction, EventTypes.TRANSACTION_DISPUTED);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override

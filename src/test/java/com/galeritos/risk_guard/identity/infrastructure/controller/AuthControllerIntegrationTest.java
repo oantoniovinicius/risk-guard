@@ -84,7 +84,7 @@ class AuthControllerIntegrationTest {
                                 {
                                   "name":"New User",
                                   "email":"new.user@example.com",
-                                  "document":"12345678912",
+                                  "document":"52998224725",
                                   "password":"StrongPass123"
                                 }
                                 """;
