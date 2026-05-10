@@ -27,8 +27,7 @@ public class ListAnalystQueueUseCase {
     public Page<Transaction> execute(RiskLevel riskLevel, LocalDateTime from, LocalDateTime to, int page, int size) {
         List<Specification<Transaction>> specs = new ArrayList<>();
 
-        // Always scope to the analyst queue — this use case has exactly one purpose
-        specs.add((root, q, cb) -> cb.equal(root.get("status"), TransactionStatus.AWAITING_ANALYST));
+        specs.add((root, q, cb) -> root.get("status").in(TransactionStatus.AWAITING_ANALYST, TransactionStatus.DISPUTED));
 
         if (riskLevel != null) {
             specs.add((root, q, cb) -> cb.equal(root.get("riskLevel"), riskLevel));

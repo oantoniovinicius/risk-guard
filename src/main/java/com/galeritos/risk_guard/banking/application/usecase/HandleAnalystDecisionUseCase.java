@@ -67,6 +67,22 @@ public class HandleAnalystDecisionUseCase {
             return;
         }
 
+        if (transaction.getStatus() == TransactionStatus.DISPUTED) {
+            TransactionStatus fromStatus = transaction.getStatus();
+            applyFromDisputed(transaction, decision);
+            TransactionStatus toStatus = transaction.getStatus();
+
+            transactionRepository.save(transaction);
+
+            UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
+            decisionHistoryRepository.save(
+                    new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus));
+
+            publishStatusChanged(TransactionStatusChangedEvent.from(transaction, mapDecisionToEventType(decision)));
+            triggerPostTransitionSideEffectsFromDisputed(transactionId, decision);
+            return;
+        }
+
         if (transaction.getStatus() == TransactionStatus.APPROVED && decision == AnalystDecision.APPROVE) {
             finalizeTransactionFinancialUseCase.execute(transactionId);
             return;
@@ -88,6 +104,29 @@ public class HandleAnalystDecisionUseCase {
         }
 
         throw new InvalidAnalystDecisionStateException(transaction.getStatus(), decision);
+    }
+
+    private void applyFromDisputed(Transaction transaction, AnalystDecision decision) {
+        switch (decision) {
+            case APPROVE -> transaction.approve();
+            case DENY -> transaction.deny();
+            case CONFIRM_FRAUD -> transaction.confirmFraud();
+            case REQUEST_CUSTOMER_CONFIRMATION ->
+                throw new InvalidAnalystDecisionStateException(transaction.getStatus(), decision);
+        }
+    }
+
+    private void triggerPostTransitionSideEffectsFromDisputed(UUID transactionId, AnalystDecision decision) {
+        switch (decision) {
+            case DENY -> finalizeTransactionFinancialUseCase.execute(transactionId);
+            case CONFIRM_FRAUD -> handleFraudConfirmedUseCase.execute(transactionId);
+            case APPROVE -> {
+                // Dispute rejected — settlement already done, nothing to finalize.
+            }
+            case REQUEST_CUSTOMER_CONFIRMATION -> {
+                // Never reached — guarded in applyFromDisputed.
+            }
+        }
     }
 
     private void applyFromAwaitingAnalyst(Transaction transaction, AnalystDecision decision) {

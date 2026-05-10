@@ -66,6 +66,24 @@ public class TransferAccessGuardUseCase {
     }
 
     @Transactional(readOnly = true)
+    public void assertCanOpenDispute(UUID transactionId) {
+        AuthenticatedUser authUser = currentUserProvider.getAuthenticatedUser();
+        if (authUser.role() != Role.USER) {
+            throw new ForbiddenTransferOperationException();
+        }
+
+        User persistedUser = loadPersistedUser(authUser.userId());
+        assertActive(persistedUser);
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        if (!transaction.getSenderId().equals(persistedUser.getId())) {
+            throw new ForbiddenTransferOperationException();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public void assertCanActAsAnalyst() {
         AuthenticatedUser authUser = currentUserProvider.getAuthenticatedUser();
         if (authUser.role() != Role.ANALYST) {
