@@ -118,6 +118,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/LoginUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/RegisterUserUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinLockUseCase.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/ResetPinUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/SuspendUserUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/TransferAccessGuardUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/identity/application/usecase/UnblockUserUseCase.java
@@ -182,3 +183,5 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/shared/events/EventTypes.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/shared/infrastructure/exception/ErrorResponse.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/shared/infrastructure/exception/GlobalExceptionHandler.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/shared/infrastructure/validation/BrazilianDocumentValidator.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/shared/infrastructure/validation/ValidBrazilianDocument.java

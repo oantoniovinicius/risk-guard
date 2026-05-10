@@ -39,6 +39,7 @@ import com.galeritos.risk_guard.identity.application.usecase.GetUserDetailUseCas
 import com.galeritos.risk_guard.identity.application.usecase.ListPendingUsersUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.SuspendUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.ResetPinLockUseCase;
+import com.galeritos.risk_guard.identity.application.usecase.ResetPinUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnblockUserUseCase;
 import com.galeritos.risk_guard.identity.application.usecase.UnsuspendUserUseCase;
 import com.galeritos.risk_guard.identity.domain.model.User;
@@ -69,6 +70,7 @@ public class AdminUserController {
     private final ListUsersUseCase listUsersUseCase;
     private final GetUserTransactionsUseCase getUserTransactionsUseCase;
     private final ResetPinLockUseCase resetPinLockUseCase;
+    private final ResetPinUseCase resetPinUseCase;
 
     public AdminUserController(
             ApproveUserUseCase approveUserUseCase,
@@ -83,7 +85,8 @@ public class AdminUserController {
             GetUserDetailUseCase getUserDetailUseCase,
             ListUsersUseCase listUsersUseCase,
             GetUserTransactionsUseCase getUserTransactionsUseCase,
-            ResetPinLockUseCase resetPinLockUseCase) {
+            ResetPinLockUseCase resetPinLockUseCase,
+            ResetPinUseCase resetPinUseCase) {
         this.approveUserUseCase = approveUserUseCase;
         this.denyUserUseCase = denyUserUseCase;
         this.suspendUserUseCase = suspendUserUseCase;
@@ -97,6 +100,7 @@ public class AdminUserController {
         this.listUsersUseCase = listUsersUseCase;
         this.getUserTransactionsUseCase = getUserTransactionsUseCase;
         this.resetPinLockUseCase = resetPinLockUseCase;
+        this.resetPinUseCase = resetPinUseCase;
     }
 
     @Operation(summary = "List pending users")
@@ -277,6 +281,19 @@ public class AdminUserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> resetPinLock(@PathVariable UUID userId) {
         resetPinLockUseCase.execute(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reset PIN for a user (clears PIN so the user can define a new one)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "PIN reset — user can now set a new PIN via POST /user/pin"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    @PostMapping("/{userId}/reset-pin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetPin(@PathVariable UUID userId) {
+        resetPinUseCase.execute(userId);
         return ResponseEntity.noContent().build();
     }
 
