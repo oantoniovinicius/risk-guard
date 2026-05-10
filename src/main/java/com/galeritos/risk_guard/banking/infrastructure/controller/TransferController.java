@@ -57,9 +57,9 @@ public class TransferController {
 
     @Operation(summary = "Create a transfer")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Transfer created"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "403", description = "User not allowed to transfer (not ACTIVE)")
+            @ApiResponse(responseCode = "200", description = "Transfer created"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "403", description = "User not allowed to transfer (not ACTIVE)")
     })
     @PostMapping
     public ResponseEntity<CreateTransferResponse> createTransfer(@Valid @RequestBody CreateTransferRequest request) {
@@ -85,8 +85,8 @@ public class TransferController {
 
     @Operation(summary = "Get transaction status")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Status returned"),
-        @ApiResponse(responseCode = "404", description = "Transaction not found")
+            @ApiResponse(responseCode = "200", description = "Status returned"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found")
     })
     @GetMapping("/{transactionId}/status")
     public ResponseEntity<TransactionStatusResponse> getTransactionStatus(@PathVariable UUID transactionId) {
@@ -107,11 +107,11 @@ public class TransferController {
 
     @Operation(summary = "Submit customer confirmation or fraud report")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Decision recorded"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "403", description = "Wrong PIN or PIN blocked"),
-        @ApiResponse(responseCode = "404", description = "Transaction not found"),
-        @ApiResponse(responseCode = "409", description = "Transaction not awaiting customer confirmation")
+            @ApiResponse(responseCode = "204", description = "Decision recorded"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "403", description = "Wrong PIN or PIN blocked"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found"),
+            @ApiResponse(responseCode = "409", description = "Transaction not awaiting customer confirmation")
     })
     @PostMapping("/{transactionId}/customer-confirmation")
     public ResponseEntity<Void> confirmTransactionByCustomer(
@@ -124,10 +124,10 @@ public class TransferController {
 
     @Operation(summary = "Open a dispute on an approved transaction")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Dispute opened"),
-        @ApiResponse(responseCode = "403", description = "Not the sender or user not active"),
-        @ApiResponse(responseCode = "404", description = "Transaction not found"),
-        @ApiResponse(responseCode = "409", description = "Transaction is not in APPROVED status")
+            @ApiResponse(responseCode = "204", description = "Dispute opened"),
+            @ApiResponse(responseCode = "403", description = "Not the sender or user not active"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found"),
+            @ApiResponse(responseCode = "409", description = "Transaction is not in APPROVED status")
     })
     @PostMapping("/{transactionId}/dispute")
     public ResponseEntity<Void> openDispute(@PathVariable UUID transactionId) {
@@ -138,11 +138,11 @@ public class TransferController {
 
     @Operation(summary = "Submit analyst decision on a transaction")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Decision recorded"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "403", description = "Forbidden — requires ANALYST role"),
-        @ApiResponse(responseCode = "404", description = "Transaction not found"),
-        @ApiResponse(responseCode = "409", description = "Transaction not awaiting analyst decision")
+            @ApiResponse(responseCode = "204", description = "Decision recorded"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — requires ANALYST role"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found"),
+            @ApiResponse(responseCode = "409", description = "Transaction not awaiting analyst decision")
     })
     @PostMapping("/{transactionId}/analyst-decision")
     public ResponseEntity<Void> decideTransactionAsAnalyst(
