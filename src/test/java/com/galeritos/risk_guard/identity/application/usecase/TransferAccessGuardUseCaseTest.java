@@ -47,6 +47,15 @@ class TransferAccessGuardUseCaseTest {
     }
 
     @Test
+    void shouldBlockAdminFromCreatingTransfer() {
+        UUID userId = UUID.randomUUID();
+
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(authenticatedUser(userId, Role.ADMIN));
+
+        assertThrows(ForbiddenTransferOperationException.class, () -> useCase.assertCanCreateTransfer(userId));
+    }
+
+    @Test
     void shouldBlockPendingUserFromCreatingTransfer() {
         UUID userId = UUID.randomUUID();
         User user = new User(null, "Pending", "pending@example.com", "12345678901", Role.USER, UserStatus.PENDING);
@@ -67,6 +76,17 @@ class TransferAccessGuardUseCaseTest {
         when(userRepository.findById(authUserId)).thenReturn(Optional.of(user));
 
         assertThrows(ForbiddenTransferOperationException.class, () -> useCase.assertCanCreateTransfer(otherSenderId));
+    }
+
+    @Test
+    void shouldAllowActiveAnalystToCreateTransfer() {
+        UUID analystId = UUID.randomUUID();
+        User analyst = new User(analystId, "Analyst", "analyst@example.com", "12345678901", Role.ANALYST, UserStatus.ACTIVE);
+
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(authenticatedUser(analystId, Role.ANALYST));
+        when(userRepository.findById(analystId)).thenReturn(Optional.of(analyst));
+
+        assertDoesNotThrow(() -> useCase.assertCanCreateTransfer(analystId));
     }
 
     @Test

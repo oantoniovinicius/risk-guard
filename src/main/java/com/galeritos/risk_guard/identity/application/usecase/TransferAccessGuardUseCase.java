@@ -36,7 +36,7 @@ public class TransferAccessGuardUseCase {
     @Transactional(readOnly = true)
     public void assertCanCreateTransfer(UUID senderId) {
         AuthenticatedUser authUser = currentUserProvider.getAuthenticatedUser();
-        if (authUser.role() != Role.USER) {
+        if (authUser.role() == Role.ADMIN) {
             throw new ForbiddenTransferOperationException();
         }
 
@@ -50,7 +50,7 @@ public class TransferAccessGuardUseCase {
     @Transactional(readOnly = true)
     public void assertCanConfirmCustomerDecision(UUID transactionId) {
         AuthenticatedUser authUser = currentUserProvider.getAuthenticatedUser();
-        if (authUser.role() != Role.USER) {
+        if (authUser.role() == Role.ADMIN) {
             throw new ForbiddenTransferOperationException();
         }
 
@@ -68,7 +68,7 @@ public class TransferAccessGuardUseCase {
     @Transactional(readOnly = true)
     public void assertCanOpenDispute(UUID transactionId) {
         AuthenticatedUser authUser = currentUserProvider.getAuthenticatedUser();
-        if (authUser.role() != Role.USER) {
+        if (authUser.role() == Role.ADMIN) {
             throw new ForbiddenTransferOperationException();
         }
 

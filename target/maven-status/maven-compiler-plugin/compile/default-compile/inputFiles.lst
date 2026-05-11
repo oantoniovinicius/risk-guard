@@ -67,6 +67,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/OpenDisputeUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/dto/CreateTransferCommand.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AccountNotFoundException.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AnalystConflictOfInterestException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientBalanceException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientReservedBalanceException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidAnalystDecisionStateException.java
@@ -176,7 +177,6 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/application/scoring/OffHoursRule.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/application/scoring/ReceiverProfileRule.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/application/scoring/TransactionFrequencyRule.java
-/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/application/scoring/UserHistoryRule.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/application/usecase/AnalyzeTransactionUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/domain/model/RiskAnalysis.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/risk/domain/scoring/RiskRule.java

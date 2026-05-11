@@ -9,6 +9,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
 import com.galeritos.risk_guard.banking.application.port.out.BankingEventPublisher;
+import com.galeritos.risk_guard.banking.domain.exception.AnalystConflictOfInterestException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
@@ -51,6 +52,11 @@ public class HandleAnalystDecisionUseCase {
         Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
+        UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
+        if (transaction.getReceiverId().equals(analystId) || transaction.getSenderId().equals(analystId)) {
+            throw new AnalystConflictOfInterestException();
+        }
+
         if (transaction.getStatus() == TransactionStatus.AWAITING_ANALYST) {
             TransactionStatus fromStatus = transaction.getStatus();
             applyFromAwaitingAnalyst(transaction, decision);
@@ -58,7 +64,6 @@ public class HandleAnalystDecisionUseCase {
 
             transactionRepository.save(transaction);
 
-            UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
             decisionHistoryRepository.save(
                     new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus, reason));
 
@@ -74,7 +79,6 @@ public class HandleAnalystDecisionUseCase {
 
             transactionRepository.save(transaction);
 
-            UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
             decisionHistoryRepository.save(
                     new TransactionDecisionHistory(transactionId, analystId, decision, fromStatus, toStatus, reason));
 

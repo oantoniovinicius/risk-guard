@@ -31,7 +31,7 @@ class ReceiverProfileRuleTest {
     void shouldFireForSuspectReceiver() {
         RuleResult result = rule.evaluate(ctx(true, 0L));
         assertTrue(result.fired());
-        assertEquals(0.15, result.contribution(), 0.001);
+        assertEquals(0.40, result.contribution(), 0.001);
         assertTrue(result.signal().contains("recipient account is flagged as suspect"));
     }
 
@@ -39,14 +39,14 @@ class ReceiverProfileRuleTest {
     void shouldReturnHigherContributionWhenReceiverHasFraudHistory() {
         RuleResult result = rule.evaluate(ctx(false, 3L));
         assertTrue(result.fired());
-        assertEquals(0.25, result.contribution(), 0.001);
+        assertEquals(0.70, result.contribution(), 0.001);
         assertTrue(result.signal().contains("3 confirmed fraud case(s) as receiver"));
     }
 
     @Test
     void shouldPrioritizeFraudHistoryOverSuspectFlag() {
         RuleResult result = rule.evaluate(ctx(true, 2L));
-        assertEquals(0.25, result.contribution(), 0.001);
+        assertEquals(0.70, result.contribution(), 0.001);
         assertTrue(result.signal().contains("confirmed fraud case(s) as receiver"));
     }
 }

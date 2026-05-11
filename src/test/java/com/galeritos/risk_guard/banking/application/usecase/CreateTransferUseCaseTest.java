@@ -32,6 +32,10 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.domain.model.User;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
+import com.galeritos.risk_guard.identity.domain.model.enums.UserStatus;
+import com.galeritos.risk_guard.identity.infrastructure.persistence.repository.UserRepository;
 import com.galeritos.risk_guard.shared.events.EventTypes;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +49,9 @@ class CreateTransferUseCaseTest {
 
     @Mock
     private BankingEventPublisher eventPublisher;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private CreateTransferUseCase useCase;
