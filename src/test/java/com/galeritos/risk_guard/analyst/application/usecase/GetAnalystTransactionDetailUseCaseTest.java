@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -12,14 +13,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.galeritos.risk_guard.analyst.application.usecase.dto.TransactionDetailAggregate;
+import com.galeritos.risk_guard.banking.domain.exception.AnalystConflictOfInterestException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.TransactionDecisionHistory;
@@ -28,6 +32,8 @@ import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionDecisionHistoryRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
 import com.galeritos.risk_guard.identity.domain.exception.UserNotFoundException;
 import com.galeritos.risk_guard.identity.domain.model.User;
 import com.galeritos.risk_guard.identity.domain.model.enums.Role;
@@ -52,8 +58,20 @@ class GetAnalystTransactionDetailUseCaseTest {
     @Mock
     private TransactionDecisionHistoryRepository decisionHistoryRepository;
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+
     @InjectMocks
     private GetAnalystTransactionDetailUseCase useCase;
+
+    private final UUID analystId = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+    }
 
     private Transaction buildTransaction(UUID senderId) {
         UUID transactionId = UUID.randomUUID();
@@ -155,5 +173,28 @@ class GetAnalystTransactionDetailUseCaseTest {
         when(userRepository.findById(senderId)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> useCase.execute(transactionId));
+    }
+
+    @Test
+    void shouldThrowWhenAnalystIsTheSender() {
+        Transaction transaction = buildTransaction(analystId);
+        UUID transactionId = transaction.getId();
+
+        when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
+
+        assertThrows(AnalystConflictOfInterestException.class, () -> useCase.execute(transactionId));
+    }
+
+    @Test
+    void shouldThrowWhenAnalystIsTheReceiver() {
+        UUID senderId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                senderId, analystId, new BigDecimal("700.00"),
+                TransactionStatus.AWAITING_ANALYST, FinancialStatus.RESERVED, null, LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", UUID.randomUUID());
+
+        when(transactionRepository.findById(transaction.getId())).thenReturn(Optional.of(transaction));
+
+        assertThrows(AnalystConflictOfInterestException.class, () -> useCase.execute(transaction.getId()));
     }
 }

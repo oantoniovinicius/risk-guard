@@ -2,6 +2,7 @@ package com.galeritos.risk_guard.analyst.application.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,11 +25,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.AuthenticatedUser;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
+import com.galeritos.risk_guard.identity.domain.model.enums.Role;
 import com.galeritos.risk_guard.shared.enums.RiskLevel;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,8 +42,18 @@ class ListAnalystQueueUseCaseTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+
     @InjectMocks
     private ListAnalystQueueUseCase useCase;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(UUID.randomUUID(), "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+    }
 
     private Transaction awaitingAnalystTransaction() {
         return new Transaction(
@@ -125,5 +141,20 @@ class ListAnalystQueueUseCaseTest {
         assertEquals(2, result.getTotalElements());
         assertEquals(TransactionStatus.AWAITING_ANALYST, result.getContent().get(0).getStatus());
         assertEquals(TransactionStatus.DISPUTED, result.getContent().get(1).getStatus());
+    }
+
+    @Test
+    void shouldExcludeAnalystOwnTransactionsFromQueue() {
+        UUID analystId = UUID.randomUUID();
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+        when(transactionRepository.findAll(ArgumentMatchers.<Specification<Transaction>>any(), any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        Page<Transaction> result = useCase.execute(null, null, null, 0, 20);
+
+        assertEquals(0, result.getTotalElements());
+        verify(transactionRepository).findAll(ArgumentMatchers.<Specification<Transaction>>any(), any(Pageable.class));
     }
 }

@@ -3,6 +3,7 @@ package com.galeritos.risk_guard.analyst.application.usecase;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,21 +14,29 @@ import org.springframework.stereotype.Service;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
+import com.galeritos.risk_guard.identity.application.security.CurrentUserProvider;
 import com.galeritos.risk_guard.shared.enums.RiskLevel;
 
 @Service
 public class ListAnalystQueueUseCase {
 
     private final TransactionRepository transactionRepository;
+    private final CurrentUserProvider currentUserProvider;
 
-    public ListAnalystQueueUseCase(TransactionRepository transactionRepository) {
+    public ListAnalystQueueUseCase(TransactionRepository transactionRepository, CurrentUserProvider currentUserProvider) {
         this.transactionRepository = transactionRepository;
+        this.currentUserProvider = currentUserProvider;
     }
 
     public Page<Transaction> execute(RiskLevel riskLevel, LocalDateTime from, LocalDateTime to, int page, int size) {
+        UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
+
         List<Specification<Transaction>> specs = new ArrayList<>();
 
         specs.add((root, q, cb) -> root.get("status").in(TransactionStatus.AWAITING_ANALYST, TransactionStatus.DISPUTED));
+        specs.add((root, q, cb) -> cb.and(
+                cb.notEqual(root.get("senderId"), analystId),
+                cb.notEqual(root.get("receiverId"), analystId)));
 
         if (riskLevel != null) {
             specs.add((root, q, cb) -> cb.equal(root.get("riskLevel"), riskLevel));
