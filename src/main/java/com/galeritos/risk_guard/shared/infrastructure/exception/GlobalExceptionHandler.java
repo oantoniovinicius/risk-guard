@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.galeritos.risk_guard.admin.domain.exception.InvalidAdminSettingsException;
 import com.galeritos.risk_guard.admin.domain.exception.InvalidRoleChangeException;
 import com.galeritos.risk_guard.banking.domain.exception.AccountNotFoundException;
+import com.galeritos.risk_guard.banking.domain.exception.AnalystConflictOfInterestException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.InsufficientBalanceException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidCustomerConfirmationStateException;
@@ -64,6 +65,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleInvalidCustomerState(InvalidCustomerConfirmationStateException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AnalystConflictOfInterestException.class)
+    public ResponseEntity<?> handleAnalystConflictOfInterest(AnalystConflictOfInterestException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse(ex.getMessage()));
     }
 

@@ -67,6 +67,7 @@
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/OpenDisputeUseCase.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/application/usecase/dto/CreateTransferCommand.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AccountNotFoundException.java
+/Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/AnalystConflictOfInterestException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientBalanceException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InsufficientReservedBalanceException.java
 /Users/antonio/Documents/risk-guard/src/main/java/com/galeritos/risk_guard/banking/domain/exception/InvalidAnalystDecisionStateException.java

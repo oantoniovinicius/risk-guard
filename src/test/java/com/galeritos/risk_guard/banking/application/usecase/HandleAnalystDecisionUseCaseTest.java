@@ -28,6 +28,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.galeritos.risk_guard.banking.application.event.TransactionStatusChangedEvent;
+import com.galeritos.risk_guard.banking.domain.exception.AnalystConflictOfInterestException;
 import com.galeritos.risk_guard.banking.domain.exception.InvalidAnalystDecisionStateException;
 import com.galeritos.risk_guard.banking.domain.exception.TransactionNotFoundException;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
@@ -424,6 +425,60 @@ class HandleAnalystDecisionUseCaseTest {
         useCase.execute(transactionId, AnalystDecision.APPROVE, null);
 
         verify(decisionHistoryRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenAnalystIsReceiverOfTransaction() {
+        UUID transactionId = UUID.randomUUID();
+        UUID analystId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                analystId,
+                new BigDecimal("500.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+
+        assertThrows(AnalystConflictOfInterestException.class,
+                () -> useCase.execute(transactionId, AnalystDecision.APPROVE, null));
+
+        verify(transactionRepository, never()).save(any());
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
+    void shouldThrowWhenAnalystIsReceiverOfDisputedTransaction() {
+        UUID transactionId = UUID.randomUUID();
+        UUID analystId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                analystId,
+                new BigDecimal("200.00"),
+                TransactionStatus.DISPUTED,
+                FinancialStatus.SETTLED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+
+        assertThrows(AnalystConflictOfInterestException.class,
+                () -> useCase.execute(transactionId, AnalystDecision.APPROVE, null));
+
+        verify(transactionRepository, never()).save(any());
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
     }
 
     // --- DISPUTED paths ---
