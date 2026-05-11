@@ -53,7 +53,7 @@ public class HandleAnalystDecisionUseCase {
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
         UUID analystId = currentUserProvider.getAuthenticatedUser().userId();
-        if (transaction.getReceiverId().equals(analystId)) {
+        if (transaction.getReceiverId().equals(analystId) || transaction.getSenderId().equals(analystId)) {
             throw new AnalystConflictOfInterestException();
         }
 

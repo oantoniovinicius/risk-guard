@@ -456,6 +456,34 @@ class HandleAnalystDecisionUseCaseTest {
     }
 
     @Test
+    void shouldThrowWhenAnalystIsSenderOfTransaction() {
+        UUID transactionId = UUID.randomUUID();
+        UUID analystId = UUID.randomUUID();
+        Transaction transaction = new Transaction(
+                analystId,
+                UUID.randomUUID(),
+                new BigDecimal("500.00"),
+                TransactionStatus.AWAITING_ANALYST,
+                FinancialStatus.RESERVED,
+                null,
+                LocalDateTime.now());
+        ReflectionTestUtils.setField(transaction, "id", transactionId);
+
+        when(transactionRepository.findByIdForUpdate(transactionId)).thenReturn(Optional.of(transaction));
+        when(currentUserProvider.getAuthenticatedUser()).thenReturn(
+                new AuthenticatedUser(analystId, "analyst@example.com", Role.ANALYST,
+                        List.of(new SimpleGrantedAuthority("ROLE_ANALYST"))));
+
+        assertThrows(AnalystConflictOfInterestException.class,
+                () -> useCase.execute(transactionId, AnalystDecision.APPROVE, null));
+
+        verify(transactionRepository, never()).save(any());
+        verify(finalizeTransactionFinancialUseCase, never()).execute(transactionId);
+        verify(handleFraudConfirmedUseCase, never()).execute(transactionId);
+        verify(eventPublisher, never()).publishTransactionStatusChanged(any());
+    }
+
+    @Test
     void shouldThrowWhenAnalystIsReceiverOfDisputedTransaction() {
         UUID transactionId = UUID.randomUUID();
         UUID analystId = UUID.randomUUID();
