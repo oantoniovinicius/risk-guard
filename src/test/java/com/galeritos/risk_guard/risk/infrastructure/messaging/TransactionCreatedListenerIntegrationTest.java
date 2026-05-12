@@ -17,9 +17,11 @@ import org.springframework.context.annotation.Import;
 
 import com.galeritos.risk_guard.TestcontainersConfiguration;
 import com.galeritos.risk_guard.banking.application.event.TransactionCreatedEvent;
+import com.galeritos.risk_guard.banking.domain.model.Account;
 import com.galeritos.risk_guard.banking.domain.model.Transaction;
 import com.galeritos.risk_guard.banking.domain.model.enums.FinancialStatus;
 import com.galeritos.risk_guard.banking.domain.model.enums.TransactionStatus;
+import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.AccountRepository;
 import com.galeritos.risk_guard.banking.infrastructure.persistence.repository.TransactionRepository;
 import com.galeritos.risk_guard.config.MessagingProperties;
 import com.galeritos.risk_guard.identity.domain.model.User;
@@ -48,12 +50,16 @@ class TransactionCreatedListenerIntegrationTest {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
         riskAnalysisRepository.deleteAll();
         transactionRepository.deleteAll();
+        accountRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -73,6 +79,9 @@ class TransactionCreatedListenerIntegrationTest {
                 "2" + UUID.randomUUID().toString().replace("-", "").substring(0, 10),
                 Role.USER,
                 UserStatus.ACTIVE));
+
+        accountRepository.save(new Account(null, sender.getId(), new BigDecimal("1000.00"), new BigDecimal("650.00")));
+        accountRepository.save(new Account(null, receiver.getId(), new BigDecimal("500.00"), BigDecimal.ZERO));
 
         Transaction transaction = transactionRepository.save(new Transaction(
                 sender.getId(),
