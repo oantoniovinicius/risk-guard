@@ -24,6 +24,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -90,6 +91,12 @@ class TransferControllerIntegrationTest {
     private RabbitAdmin rabbitAdmin;
 
     @Autowired
+    private RabbitListenerEndpointRegistry listenerRegistry;
+
+    @Autowired
+    private MessagingProperties messagingProperties;
+
+    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -105,8 +112,17 @@ class TransferControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        cleanDb();
+        listenerRegistry.stop();
+        rabbitTemplate.execute(channel -> {
+            channel.queuePurge(messagingProperties.consumer().transactionCreatedQueue());
+            channel.queuePurge(messagingProperties.consumer().transactionAnalyzedQueue());
+            channel.queuePurge(messagingProperties.consumer().transactionStatusQueue());
+            channel.queuePurge(messagingProperties.consumer().userApprovedQueue());
+            return null;
+        });
         rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
+        cleanDb();
+        listenerRegistry.start();
     }
 
     @AfterEach
