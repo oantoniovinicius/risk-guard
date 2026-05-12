@@ -127,6 +127,15 @@ class TransferControllerIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        listenerRegistry.stop();
+        rabbitTemplate.execute(channel -> {
+            channel.queuePurge(messagingProperties.consumer().transactionCreatedQueue());
+            channel.queuePurge(messagingProperties.consumer().transactionAnalyzedQueue());
+            channel.queuePurge(messagingProperties.consumer().transactionStatusQueue());
+            channel.queuePurge(messagingProperties.consumer().userApprovedQueue());
+            return null;
+        });
+        rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
         cleanDb();
     }
 
