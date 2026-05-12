@@ -122,7 +122,6 @@ class TransferControllerIntegrationTest {
         });
         rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
         cleanDb();
-        listenerRegistry.start();
     }
 
     @AfterEach
