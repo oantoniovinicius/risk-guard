@@ -112,21 +112,18 @@ class TransferControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         listenerRegistry.stop();
-        rabbitAdmin.declareQueue(transactionCreatedTestQueue);
-        rabbitTemplate.execute(channel -> {
-            channel.queuePurge(messagingProperties.consumer().transactionCreatedQueue());
-            channel.queuePurge(messagingProperties.consumer().transactionAnalyzedQueue());
-            channel.queuePurge(messagingProperties.consumer().transactionStatusQueue());
-            channel.queuePurge(messagingProperties.consumer().userApprovedQueue());
-            return null;
-        });
-        rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
+        purgeAppQueues();
         cleanDb();
     }
 
     @AfterEach
     void tearDown() {
         listenerRegistry.stop();
+        purgeAppQueues();
+        cleanDb();
+    }
+
+    private void purgeAppQueues() {
         rabbitTemplate.execute(channel -> {
             channel.queuePurge(messagingProperties.consumer().transactionCreatedQueue());
             channel.queuePurge(messagingProperties.consumer().transactionAnalyzedQueue());
@@ -134,12 +131,13 @@ class TransferControllerIntegrationTest {
             channel.queuePurge(messagingProperties.consumer().userApprovedQueue());
             return null;
         });
-        rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName(), true);
-        cleanDb();
     }
 
     @Test
     void shouldCreateTransferReserveBalanceAndPublishTransactionCreatedMessage() throws Exception {
+        rabbitAdmin.declareQueue(transactionCreatedTestQueue);
+        rabbitAdmin.purgeQueue(transactionCreatedTestQueue.getName());
+
         BigDecimal transferAmount = new BigDecimal("350.00");
 
         User sender = userRepository
