@@ -498,7 +498,7 @@ class TransferControllerIntegrationTest {
     static class RabbitTestConfig {
         @Bean
         Queue transactionCreatedTestQueue() {
-            return new Queue("test.transaction-created." + UUID.randomUUID(), false, false, false);
+            return new Queue("test.transaction-created." + UUID.randomUUID(), true, false, false);
         }
 
         @Bean
