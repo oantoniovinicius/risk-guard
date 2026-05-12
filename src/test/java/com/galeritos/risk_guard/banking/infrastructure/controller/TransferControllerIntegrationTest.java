@@ -16,7 +16,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.AnonymousQueue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Message;
@@ -113,6 +112,7 @@ class TransferControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         listenerRegistry.stop();
+        rabbitAdmin.declareQueue(transactionCreatedTestQueue);
         rabbitTemplate.execute(channel -> {
             channel.queuePurge(messagingProperties.consumer().transactionCreatedQueue());
             channel.queuePurge(messagingProperties.consumer().transactionAnalyzedQueue());
@@ -500,7 +500,7 @@ class TransferControllerIntegrationTest {
     static class RabbitTestConfig {
         @Bean
         Queue transactionCreatedTestQueue() {
-            return new AnonymousQueue();
+            return new Queue("test.transaction-created." + UUID.randomUUID(), false, false, false);
         }
 
         @Bean
