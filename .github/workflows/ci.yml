@@ -23,3 +23,10 @@ jobs:
 
       - name: Run tests
         run: mvn test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+          APP_JWT_SECRET_BASE64: ${{ secrets.APP_JWT_SECRET_BASE64 }}
