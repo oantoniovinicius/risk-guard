@@ -161,11 +161,12 @@ CREATED ──▶ ANALYZING ──┬──▶ APPROVED (low risk) ──▶ Fun
                         ├──▶ AWAITING_CUSTOMER (medium risk)
                         │       ├── Customer confirms (PIN) ──▶ APPROVED
                         │       ├── Customer disputes ──▶ DENIED ──▶ Funds reverted
-                        │       └── Timeout (scheduled) ──▶ DENIED ──▶ Funds reverted
+                        │       └── Timeout (scheduled) ──▶ AWAITING ANALYST ──▶ Analyst decides
                         │
                         └──▶ AWAITING_ANALYST (high risk)
                                 ├── Analyst approves ──▶ APPROVED
                                 └── Analyst denies ──▶ DENIED ──▶ Funds reverted
+                                └── Analyst reports fraud ──▶ FRAUD CONFIRMED ──▶ Funds reverted 
 
 APPROVED ──▶ DISPUTED (customer opens post-approval dispute)
          ──▶ FRAUD_CONFIRMED (investigation result)
